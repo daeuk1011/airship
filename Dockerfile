@@ -19,7 +19,7 @@ COPY --from=bun-binary /usr/local/bin/bun /usr/local/bin/bun
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN npx next build && \
-    bun build --target=node --external=better-sqlite3 scripts/migrate.ts --outfile=dist/migrate.js
+    bun build --target=node --external=better-sqlite3 scripts/migrate.ts --outfile=dist/migrate.mjs
 
 FROM node:24-slim AS runner
 WORKDIR /app
@@ -32,7 +32,7 @@ COPY --from=build /app/public ./public
 COPY --from=build /app/.next/standalone ./
 COPY --from=build /app/.next/static ./.next/static
 COPY --from=build /app/drizzle ./drizzle
-COPY --from=build /app/dist/migrate.js ./migrate.js
+COPY --from=build /app/dist/migrate.mjs ./migrate.mjs
 
 RUN mkdir -p /app/data && chown -R nextjs:nodejs /app/data
 
@@ -42,4 +42,4 @@ EXPOSE 3000
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
-CMD ["sh", "-c", "node migrate.js && node server.js"]
+CMD ["sh", "-c", "node migrate.mjs && node server.js"]
