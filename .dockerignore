@@ -1,0 +1,9 @@
+node_modules
+.next
+.git
+data
+.env*
+*.md
+.DS_Store
+.vercel
+.playwright-mcp
