@@ -8,7 +8,7 @@ export async function GET(request: NextRequest) {
   const authError = verifyAuth(request);
   if (authError) return authError;
 
-  const appList = db.query.apps.findMany();
+  const appList = db.select().from(apps).all();
   return NextResponse.json({ apps: appList });
 }
 

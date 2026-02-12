@@ -3,9 +3,9 @@ import { apps, updates, channels } from "@/lib/db/schema";
 import { count } from "drizzle-orm";
 
 export default function DashboardOverview() {
-  const [appCount] = db.select({ value: count() }).from(apps);
-  const [updateCount] = db.select({ value: count() }).from(updates);
-  const [channelCount] = db.select({ value: count() }).from(channels);
+  const [appCount] = db.select({ value: count() }).from(apps).all();
+  const [updateCount] = db.select({ value: count() }).from(updates).all();
+  const [channelCount] = db.select({ value: count() }).from(channels).all();
 
   const stats = [
     { label: "Apps", value: appCount.value },

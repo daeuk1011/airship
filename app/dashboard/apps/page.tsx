@@ -4,7 +4,7 @@ import Link from "next/link";
 import { CreateAppForm } from "./create-app-form";
 
 export default function AppsPage() {
-  const appList = db.query.apps.findMany();
+  const appList = db.select().from(apps).all();
 
   return (
     <div className="p-8">

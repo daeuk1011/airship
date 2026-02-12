@@ -13,18 +13,18 @@ export async function GET(
 
   const { appKey } = await params;
 
-  const app = db.query.apps.findFirst({
-    where: eq(apps.appKey, appKey),
-  });
+  const app = db.select().from(apps).where(eq(apps.appKey, appKey)).get();
 
   if (!app) {
     return NextResponse.json({ error: "App not found" }, { status: 404 });
   }
 
-  const updateList = db.query.updates.findMany({
-    where: eq(updates.appId, app.id),
-    orderBy: [desc(updates.createdAt)],
-  });
+  const updateList = db
+    .select()
+    .from(updates)
+    .where(eq(updates.appId, app.id))
+    .orderBy(desc(updates.createdAt))
+    .all();
 
   return NextResponse.json({ updates: updateList });
 }

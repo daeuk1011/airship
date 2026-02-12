@@ -13,34 +13,40 @@ export default async function UpdateDetailPage({
 }) {
   const { appKey, id } = await params;
 
-  const app = db.query.apps.findFirst({
-    where: eq(apps.appKey, appKey),
-  });
-
+  const app = db.select().from(apps).where(eq(apps.appKey, appKey)).get();
   if (!app) notFound();
 
-  const update = db.query.updates.findFirst({
-    where: and(eq(updates.id, id), eq(updates.appId, app.id)),
-  });
-
+  const update = db
+    .select()
+    .from(updates)
+    .where(and(eq(updates.id, id), eq(updates.appId, app.id)))
+    .get();
   if (!update) notFound();
 
-  const assetList = db.query.assets.findMany({
-    where: eq(assets.updateId, update.id),
-  });
+  const assetList = db
+    .select()
+    .from(assets)
+    .where(eq(assets.updateId, update.id))
+    .all();
 
-  const channelList = db.query.channels.findMany({
-    where: eq(channels.appId, app.id),
-  });
+  const channelList = db
+    .select()
+    .from(channels)
+    .where(eq(channels.appId, app.id))
+    .all();
 
   const assignedChannels: string[] = [];
   for (const ch of channelList) {
-    const assignment = db.query.channelAssignments.findFirst({
-      where: and(
-        eq(channelAssignments.channelId, ch.id),
-        eq(channelAssignments.updateId, update.id)
-      ),
-    });
+    const assignment = db
+      .select()
+      .from(channelAssignments)
+      .where(
+        and(
+          eq(channelAssignments.channelId, ch.id),
+          eq(channelAssignments.updateId, update.id)
+        )
+      )
+      .get();
     if (assignment) assignedChannels.push(ch.name);
   }
 
@@ -126,7 +132,9 @@ export default async function UpdateDetailPage({
                   <span className="font-mono text-xs">{asset.key}</span>
                   <span className="text-foreground/50 text-xs">
                     {asset.fileExtension} &middot;{" "}
-                    {asset.size ? `${(asset.size / 1024).toFixed(1)} KB` : "N/A"}
+                    {asset.size
+                      ? `${(asset.size / 1024).toFixed(1)} KB`
+                      : "N/A"}
                   </span>
                 </div>
                 <p className="text-xs text-foreground/40 mt-0.5 font-mono truncate">

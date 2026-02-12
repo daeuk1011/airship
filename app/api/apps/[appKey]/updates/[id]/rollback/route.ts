@@ -14,17 +14,17 @@ export async function POST(
 
   const { appKey, id: targetUpdateId } = await params;
 
-  const app = db.query.apps.findFirst({
-    where: eq(apps.appKey, appKey),
-  });
+  const app = db.select().from(apps).where(eq(apps.appKey, appKey)).get();
 
   if (!app) {
     return NextResponse.json({ error: "App not found" }, { status: 404 });
   }
 
-  const targetUpdate = db.query.updates.findFirst({
-    where: and(eq(updates.id, targetUpdateId), eq(updates.appId, app.id)),
-  });
+  const targetUpdate = db
+    .select()
+    .from(updates)
+    .where(and(eq(updates.id, targetUpdateId), eq(updates.appId, app.id)))
+    .get();
 
   if (!targetUpdate) {
     return NextResponse.json({ error: "Target update not found" }, { status: 404 });
@@ -40,21 +40,27 @@ export async function POST(
     );
   }
 
-  const channel = db.query.channels.findFirst({
-    where: and(eq(channels.appId, app.id), eq(channels.name, channelName)),
-  });
+  const channel = db
+    .select()
+    .from(channels)
+    .where(and(eq(channels.appId, app.id), eq(channels.name, channelName)))
+    .get();
 
   if (!channel) {
     return NextResponse.json({ error: "Channel not found" }, { status: 404 });
   }
 
-  const assignment = db.query.channelAssignments.findFirst({
-    where: and(
-      eq(channelAssignments.appId, app.id),
-      eq(channelAssignments.channelId, channel.id),
-      eq(channelAssignments.runtimeVersion, targetUpdate.runtimeVersion)
-    ),
-  });
+  const assignment = db
+    .select()
+    .from(channelAssignments)
+    .where(
+      and(
+        eq(channelAssignments.appId, app.id),
+        eq(channelAssignments.channelId, channel.id),
+        eq(channelAssignments.runtimeVersion, targetUpdate.runtimeVersion)
+      )
+    )
+    .get();
 
   if (!assignment) {
     return NextResponse.json(
@@ -73,15 +79,17 @@ export async function POST(
     .run();
 
   // Record rollback history
-  db.insert(rollbackHistory).values({
-    id: uuidv4(),
-    appId: app.id,
-    channelId: channel.id,
-    fromUpdateId,
-    toUpdateId: targetUpdateId,
-    reason: reason ?? null,
-    createdAt: now,
-  }).run();
+  db.insert(rollbackHistory)
+    .values({
+      id: uuidv4(),
+      appId: app.id,
+      channelId: channel.id,
+      fromUpdateId,
+      toUpdateId: targetUpdateId,
+      reason: reason ?? null,
+      createdAt: now,
+    })
+    .run();
 
   return NextResponse.json({
     rolledBack: true,

@@ -15,9 +15,7 @@ export async function POST(
 
   const { appKey } = await params;
 
-  const app = db.query.apps.findFirst({
-    where: eq(apps.appKey, appKey),
-  });
+  const app = db.select().from(apps).where(eq(apps.appKey, appKey)).get();
 
   if (!app) {
     return NextResponse.json({ error: "App not found" }, { status: 404 });
@@ -64,58 +62,70 @@ export async function POST(
   const updateId = uuidv4();
 
   // Insert update record
-  db.insert(updates).values({
-    id: updateId,
-    appId: app.id,
-    updateGroupId,
-    runtimeVersion,
-    platform,
-    bundleS3Key: bundle.s3Key,
-    bundleHash: bundle.hash,
-    bundleSize: bundle.size ?? null,
-    createdAt: now,
-  }).run();
+  db.insert(updates)
+    .values({
+      id: updateId,
+      appId: app.id,
+      updateGroupId,
+      runtimeVersion,
+      platform,
+      bundleS3Key: bundle.s3Key,
+      bundleHash: bundle.hash,
+      bundleSize: bundle.size ?? null,
+      createdAt: now,
+    })
+    .run();
 
   // Insert asset records
   for (const asset of assetList ?? []) {
-    db.insert(assets).values({
-      id: uuidv4(),
-      updateId,
-      s3Key: asset.s3Key,
-      hash: asset.hash,
-      key: asset.key,
-      fileExtension: asset.fileExtension,
-      contentType: asset.contentType ?? null,
-      size: asset.size ?? null,
-    }).run();
+    db.insert(assets)
+      .values({
+        id: uuidv4(),
+        updateId,
+        s3Key: asset.s3Key,
+        hash: asset.hash,
+        key: asset.key,
+        fileExtension: asset.fileExtension,
+        contentType: asset.contentType ?? null,
+        size: asset.size ?? null,
+      })
+      .run();
   }
 
   // Upsert channel assignment
   const targetChannelName = channelName ?? "staging";
 
-  let channel = db.query.channels.findFirst({
-    where: and(eq(channels.appId, app.id), eq(channels.name, targetChannelName)),
-  });
+  let channel = db
+    .select()
+    .from(channels)
+    .where(and(eq(channels.appId, app.id), eq(channels.name, targetChannelName)))
+    .get();
 
   if (!channel) {
     const channelId = uuidv4();
-    db.insert(channels).values({
-      id: channelId,
-      appId: app.id,
-      name: targetChannelName,
-      createdAt: now,
-    }).run();
+    db.insert(channels)
+      .values({
+        id: channelId,
+        appId: app.id,
+        name: targetChannelName,
+        createdAt: now,
+      })
+      .run();
     channel = { id: channelId, appId: app.id, name: targetChannelName, createdAt: now };
   }
 
   // Check for existing assignment
-  const existingAssignment = db.query.channelAssignments.findFirst({
-    where: and(
-      eq(channelAssignments.appId, app.id),
-      eq(channelAssignments.channelId, channel.id),
-      eq(channelAssignments.runtimeVersion, runtimeVersion)
-    ),
-  });
+  const existingAssignment = db
+    .select()
+    .from(channelAssignments)
+    .where(
+      and(
+        eq(channelAssignments.appId, app.id),
+        eq(channelAssignments.channelId, channel.id),
+        eq(channelAssignments.runtimeVersion, runtimeVersion)
+      )
+    )
+    .get();
 
   if (existingAssignment) {
     db.update(channelAssignments)
@@ -123,14 +133,16 @@ export async function POST(
       .where(eq(channelAssignments.id, existingAssignment.id))
       .run();
   } else {
-    db.insert(channelAssignments).values({
-      id: uuidv4(),
-      appId: app.id,
-      channelId: channel.id,
-      updateId,
-      runtimeVersion,
-      updatedAt: now,
-    }).run();
+    db.insert(channelAssignments)
+      .values({
+        id: uuidv4(),
+        appId: app.id,
+        channelId: channel.id,
+        updateId,
+        runtimeVersion,
+        updatedAt: now,
+      })
+      .run();
   }
 
   return NextResponse.json({ updateId, updateGroupId }, { status: 201 });

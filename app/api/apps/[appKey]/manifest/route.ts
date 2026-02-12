@@ -17,9 +17,11 @@ export async function POST(
 ) {
   const { appKey } = await params;
 
-  const app = db.query.apps.findFirst({
-    where: eq(apps.appKey, appKey),
-  });
+  const app = db
+    .select()
+    .from(apps)
+    .where(eq(apps.appKey, appKey))
+    .get();
 
   if (!app) {
     return NextResponse.json({ error: "App not found" }, { status: 404 });
@@ -43,9 +45,11 @@ export async function POST(
     );
   }
 
-  const channel = db.query.channels.findFirst({
-    where: and(eq(channels.appId, app.id), eq(channels.name, channelName)),
-  });
+  const channel = db
+    .select()
+    .from(channels)
+    .where(and(eq(channels.appId, app.id), eq(channels.name, channelName)))
+    .get();
 
   if (!channel) {
     return new NextResponse(null, {
@@ -54,13 +58,17 @@ export async function POST(
     });
   }
 
-  const assignment = db.query.channelAssignments.findFirst({
-    where: and(
-      eq(channelAssignments.appId, app.id),
-      eq(channelAssignments.channelId, channel.id),
-      eq(channelAssignments.runtimeVersion, runtimeVersion)
-    ),
-  });
+  const assignment = db
+    .select()
+    .from(channelAssignments)
+    .where(
+      and(
+        eq(channelAssignments.appId, app.id),
+        eq(channelAssignments.channelId, channel.id),
+        eq(channelAssignments.runtimeVersion, runtimeVersion)
+      )
+    )
+    .get();
 
   if (!assignment) {
     return new NextResponse(null, {
@@ -83,13 +91,17 @@ export async function POST(
     }
   }
 
-  const update = db.query.updates.findFirst({
-    where: and(
-      eq(updates.id, assignment.updateId),
-      eq(updates.platform, platform),
-      eq(updates.enabled, 1)
-    ),
-  });
+  const update = db
+    .select()
+    .from(updates)
+    .where(
+      and(
+        eq(updates.id, assignment.updateId),
+        eq(updates.platform, platform),
+        eq(updates.enabled, 1)
+      )
+    )
+    .get();
 
   if (!update) {
     return new NextResponse(null, {
@@ -98,10 +110,11 @@ export async function POST(
     });
   }
 
-  const updateAssets = db.query.assets
-    .findMany({
-      where: eq(assets.updateId, update.id),
-    });
+  const updateAssets = db
+    .select()
+    .from(assets)
+    .where(eq(assets.updateId, update.id))
+    .all();
 
   // Generate presigned URLs
   const bundleUrl = await getPresignedDownloadUrl(update.bundleS3Key);
@@ -138,7 +151,6 @@ export async function POST(
     headers: {
       "expo-protocol-version": "1",
       "expo-sfv-version": "0",
-      "content-type": "application/json",
     },
   });
 }

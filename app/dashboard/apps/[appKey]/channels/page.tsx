@@ -1,6 +1,6 @@
 import { db } from "@/lib/db";
 import { apps, channels, channelAssignments, updates } from "@/lib/db/schema";
-import { eq, and } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 
@@ -11,25 +11,29 @@ export default async function ChannelsPage({
 }) {
   const { appKey } = await params;
 
-  const app = db.query.apps.findFirst({
-    where: eq(apps.appKey, appKey),
-  });
+  const app = db.select().from(apps).where(eq(apps.appKey, appKey)).get();
 
   if (!app) notFound();
 
-  const channelList = db.query.channels.findMany({
-    where: eq(channels.appId, app.id),
-  });
+  const channelList = db
+    .select()
+    .from(channels)
+    .where(eq(channels.appId, app.id))
+    .all();
 
   const channelsWithAssignments = channelList.map((ch) => {
-    const assignments = db.query.channelAssignments.findMany({
-      where: eq(channelAssignments.channelId, ch.id),
-    });
+    const assignments = db
+      .select()
+      .from(channelAssignments)
+      .where(eq(channelAssignments.channelId, ch.id))
+      .all();
 
     const enrichedAssignments = assignments.map((a) => {
-      const update = db.query.updates.findFirst({
-        where: eq(updates.id, a.updateId),
-      });
+      const update = db
+        .select()
+        .from(updates)
+        .where(eq(updates.id, a.updateId))
+        .get();
       return { ...a, update };
     });
 

@@ -13,23 +13,25 @@ export async function GET(
 
   const { appKey } = await params;
 
-  const app = db.query.apps.findFirst({
-    where: eq(apps.appKey, appKey),
-  });
+  const app = db.select().from(apps).where(eq(apps.appKey, appKey)).get();
 
   if (!app) {
     return NextResponse.json({ error: "App not found" }, { status: 404 });
   }
 
-  const channelList = db.query.channels.findMany({
-    where: eq(channels.appId, app.id),
-  });
+  const channelList = db
+    .select()
+    .from(channels)
+    .where(eq(channels.appId, app.id))
+    .all();
 
-  // Enrich with current assignments
   const enriched = channelList.map((ch) => {
-    const assignments = db.query.channelAssignments.findMany({
-      where: eq(channelAssignments.channelId, ch.id),
-    });
+    const assignments = db
+      .select()
+      .from(channelAssignments)
+      .where(eq(channelAssignments.channelId, ch.id))
+      .all();
+
     return {
       ...ch,
       assignments: assignments.map((a) => ({

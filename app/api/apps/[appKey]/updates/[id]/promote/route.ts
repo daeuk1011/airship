@@ -14,17 +14,17 @@ export async function POST(
 
   const { appKey, id: updateId } = await params;
 
-  const app = db.query.apps.findFirst({
-    where: eq(apps.appKey, appKey),
-  });
+  const app = db.select().from(apps).where(eq(apps.appKey, appKey)).get();
 
   if (!app) {
     return NextResponse.json({ error: "App not found" }, { status: 404 });
   }
 
-  const update = db.query.updates.findFirst({
-    where: and(eq(updates.id, updateId), eq(updates.appId, app.id)),
-  });
+  const update = db
+    .select()
+    .from(updates)
+    .where(and(eq(updates.id, updateId), eq(updates.appId, app.id)))
+    .get();
 
   if (!update) {
     return NextResponse.json({ error: "Update not found" }, { status: 404 });
@@ -41,9 +41,11 @@ export async function POST(
   }
 
   // Verify fromChannel assignment
-  const fromCh = db.query.channels.findFirst({
-    where: and(eq(channels.appId, app.id), eq(channels.name, fromChannel)),
-  });
+  const fromCh = db
+    .select()
+    .from(channels)
+    .where(and(eq(channels.appId, app.id), eq(channels.name, fromChannel)))
+    .get();
 
   if (!fromCh) {
     return NextResponse.json(
@@ -52,14 +54,18 @@ export async function POST(
     );
   }
 
-  const fromAssignment = db.query.channelAssignments.findFirst({
-    where: and(
-      eq(channelAssignments.appId, app.id),
-      eq(channelAssignments.channelId, fromCh.id),
-      eq(channelAssignments.runtimeVersion, update.runtimeVersion),
-      eq(channelAssignments.updateId, updateId)
-    ),
-  });
+  const fromAssignment = db
+    .select()
+    .from(channelAssignments)
+    .where(
+      and(
+        eq(channelAssignments.appId, app.id),
+        eq(channelAssignments.channelId, fromCh.id),
+        eq(channelAssignments.runtimeVersion, update.runtimeVersion),
+        eq(channelAssignments.updateId, updateId)
+      )
+    )
+    .get();
 
   if (!fromAssignment) {
     return NextResponse.json(
@@ -70,29 +76,37 @@ export async function POST(
 
   // Get or create toChannel
   const now = Date.now();
-  let toCh = db.query.channels.findFirst({
-    where: and(eq(channels.appId, app.id), eq(channels.name, toChannel)),
-  });
+  let toCh = db
+    .select()
+    .from(channels)
+    .where(and(eq(channels.appId, app.id), eq(channels.name, toChannel)))
+    .get();
 
   if (!toCh) {
     const toChId = uuidv4();
-    db.insert(channels).values({
-      id: toChId,
-      appId: app.id,
-      name: toChannel,
-      createdAt: now,
-    }).run();
+    db.insert(channels)
+      .values({
+        id: toChId,
+        appId: app.id,
+        name: toChannel,
+        createdAt: now,
+      })
+      .run();
     toCh = { id: toChId, appId: app.id, name: toChannel, createdAt: now };
   }
 
   // Upsert channel assignment for toChannel
-  const existingAssignment = db.query.channelAssignments.findFirst({
-    where: and(
-      eq(channelAssignments.appId, app.id),
-      eq(channelAssignments.channelId, toCh.id),
-      eq(channelAssignments.runtimeVersion, update.runtimeVersion)
-    ),
-  });
+  const existingAssignment = db
+    .select()
+    .from(channelAssignments)
+    .where(
+      and(
+        eq(channelAssignments.appId, app.id),
+        eq(channelAssignments.channelId, toCh.id),
+        eq(channelAssignments.runtimeVersion, update.runtimeVersion)
+      )
+    )
+    .get();
 
   const percent = rolloutPercent ?? 100;
 
@@ -102,15 +116,17 @@ export async function POST(
       .where(eq(channelAssignments.id, existingAssignment.id))
       .run();
   } else {
-    db.insert(channelAssignments).values({
-      id: uuidv4(),
-      appId: app.id,
-      channelId: toCh.id,
-      updateId,
-      runtimeVersion: update.runtimeVersion,
-      rolloutPercent: percent,
-      updatedAt: now,
-    }).run();
+    db.insert(channelAssignments)
+      .values({
+        id: uuidv4(),
+        appId: app.id,
+        channelId: toCh.id,
+        updateId,
+        runtimeVersion: update.runtimeVersion,
+        rolloutPercent: percent,
+        updatedAt: now,
+      })
+      .run();
   }
 
   return NextResponse.json({

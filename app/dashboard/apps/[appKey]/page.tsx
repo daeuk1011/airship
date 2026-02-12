@@ -11,27 +11,32 @@ export default async function AppDetailPage({
 }) {
   const { appKey } = await params;
 
-  const app = db.query.apps.findFirst({
-    where: eq(apps.appKey, appKey),
-  });
+  const app = db.select().from(apps).where(eq(apps.appKey, appKey)).get();
 
   if (!app) notFound();
 
-  const updateList = db.query.updates.findMany({
-    where: eq(updates.appId, app.id),
-    orderBy: [desc(updates.createdAt)],
-  });
+  const updateList = db
+    .select()
+    .from(updates)
+    .where(eq(updates.appId, app.id))
+    .orderBy(desc(updates.createdAt))
+    .all();
 
-  const channelList = db.query.channels.findMany({
-    where: eq(channels.appId, app.id),
-  });
+  const channelList = db
+    .select()
+    .from(channels)
+    .where(eq(channels.appId, app.id))
+    .all();
 
   // Build a map of updateId -> channel names
   const assignmentMap = new Map<string, string[]>();
   for (const ch of channelList) {
-    const assignments = db.query.channelAssignments.findMany({
-      where: eq(channelAssignments.channelId, ch.id),
-    });
+    const assignments = db
+      .select()
+      .from(channelAssignments)
+      .where(eq(channelAssignments.channelId, ch.id))
+      .all();
+
     for (const a of assignments) {
       const existing = assignmentMap.get(a.updateId) ?? [];
       existing.push(ch.name);
