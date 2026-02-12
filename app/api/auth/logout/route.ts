@@ -5,7 +5,7 @@ export async function POST() {
 
   response.cookies.set("airship_session", "", {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
+    secure: process.env.COOKIE_SECURE === "true",
     sameSite: "lax",
     path: "/",
     maxAge: 0,
