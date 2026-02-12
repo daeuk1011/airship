@@ -12,7 +12,21 @@ function hashClientId(clientId: string, rolloutPercent: number): boolean {
   return value < rolloutPercent;
 }
 
+export async function GET(
+  request: NextRequest,
+  context: { params: Promise<{ appKey: string }> }
+) {
+  return handleManifest(request, context);
+}
+
 export async function POST(
+  request: NextRequest,
+  context: { params: Promise<{ appKey: string }> }
+) {
+  return handleManifest(request, context);
+}
+
+async function handleManifest(
   request: NextRequest,
   { params }: { params: Promise<{ appKey: string }> }
 ) {
