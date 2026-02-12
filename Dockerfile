@@ -1,17 +1,26 @@
-FROM oven/bun:1 AS deps
-WORKDIR /app
-RUN apt-get update && apt-get install -y python3 make g++ --no-install-recommends && rm -rf /var/lib/apt/lists/*
-COPY package.json bun.lock ./
-RUN bun install --frozen-lockfile
+# syntax=docker/dockerfile:1
 
-FROM oven/bun:1 AS build
+FROM oven/bun:1 AS bun-binary
+
+FROM node:24-slim AS deps
 WORKDIR /app
+COPY --from=bun-binary /usr/local/bin/bun /usr/local/bin/bun
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    apt-get update && apt-get install -y python3 make g++ --no-install-recommends
+COPY package.json bun.lock ./
+RUN --mount=type=cache,target=/root/.bun/install/cache \
+    bun install --frozen-lockfile
+
+FROM node:24-slim AS build
+WORKDIR /app
+COPY --from=bun-binary /usr/local/bin/bun /usr/local/bin/bun
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-RUN bun run build
-RUN bun build --target=node --external=better-sqlite3 scripts/migrate.ts --outfile=dist/migrate.js
+RUN npx next build && \
+    bun build --target=node --external=better-sqlite3 scripts/migrate.ts --outfile=dist/migrate.js
 
-FROM node:20-slim AS runner
+FROM node:24-slim AS runner
 WORKDIR /app
 ENV NODE_ENV=production
 

@@ -3,6 +3,8 @@ import { apps, updates, channels } from "@/shared/libs/db/schema";
 import { count } from "drizzle-orm";
 import { Card } from "@/shared/ui/card";
 
+export const dynamic = "force-dynamic";
+
 export default function DashboardOverview() {
   const [appCount] = db.select({ value: count() }).from(apps).all();
   const [updateCount] = db.select({ value: count() }).from(updates).all();

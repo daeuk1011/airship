@@ -6,6 +6,8 @@ import Link from "next/link";
 import { BackLink } from "@/shared/ui/back-link";
 import { CardList } from "@/shared/ui/card";
 
+export const dynamic = "force-dynamic";
+
 export default async function AppDetailPage({
   params,
 }: {

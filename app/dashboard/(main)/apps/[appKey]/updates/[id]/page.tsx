@@ -8,6 +8,8 @@ import { CardList } from "@/shared/ui/card";
 import { RollbackButton } from "@/features/updates/components/rollback-button";
 import { PromoteButton } from "@/features/updates/components/promote-button";
 
+export const dynamic = "force-dynamic";
+
 export default async function UpdateDetailPage({
   params,
 }: {

@@ -4,6 +4,8 @@ import Link from "next/link";
 import { CreateAppForm } from "@/features/apps/components/create-app-form";
 import { CardList } from "@/shared/ui/card";
 
+export const dynamic = "force-dynamic";
+
 export default function AppsPage() {
   const appList = db.select().from(apps).all();
 
