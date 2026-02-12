@@ -40,6 +40,36 @@ STAGING_RUNTIME_VERSION="1.0.0" \
 bun run rehearse:staging
 ```
 
+## Docker Deployment (AWS t4g.micro)
+
+`t4g.micro` is ARM-based, so always build and run `linux/arm64` images.
+
+Build:
+
+```bash
+docker buildx build --platform linux/arm64 --progress=plain -t airship:arm64 .
+```
+
+Run:
+
+```bash
+docker run -d \
+  --name airship \
+  --restart unless-stopped \
+  -p 3000:3000 \
+  -v /opt/airship/data:/app/data \
+  -e NODE_ENV=production \
+  --env-file .env \
+  airship:arm64
+```
+
+Health check:
+
+```bash
+curl -i http://localhost:3000
+docker logs --tail=100 airship
+```
+
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:

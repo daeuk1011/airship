@@ -5,12 +5,13 @@ FROM oven/bun:1 AS bun-binary
 FROM node:24-slim AS deps
 WORKDIR /app
 COPY --from=bun-binary /usr/local/bin/bun /usr/local/bin/bun
+ENV BUN_INSTALL_CACHE_DIR=/root/.bun/install/cache
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     --mount=type=cache,target=/var/lib/apt,sharing=locked \
     apt-get update && apt-get install -y python3 make g++ --no-install-recommends
 COPY package.json bun.lock ./
 RUN --mount=type=cache,target=/root/.bun/install/cache \
-    bun install --frozen-lockfile
+    bun install --frozen-lockfile --verbose
 
 FROM node:24-slim AS build
 WORKDIR /app
