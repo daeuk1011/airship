@@ -1,0 +1,94 @@
+name: Deploy
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ap-northeast-2
+
+      - name: Login to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push to ECR
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          platforms: linux/arm64
+          tags: |
+            ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.ap-northeast-2.amazonaws.com/airship:latest
+            ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.ap-northeast-2.amazonaws.com/airship:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Deploy to EC2 via SSM
+        env:
+          AWS_REGION: ap-northeast-2
+          ECR_REGISTRY: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.ap-northeast-2.amazonaws.com
+          INSTANCE_ID: ${{ secrets.EC2_INSTANCE_ID }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          IMAGE_URI="$ECR_REGISTRY/airship:$IMAGE_TAG"
+
+          COMMAND_ID=$(aws ssm send-command \
+            --region "$AWS_REGION" \
+            --instance-ids "$INSTANCE_ID" \
+            --document-name "AWS-RunShellScript" \
+            --parameters "commands=[
+              \"aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $ECR_REGISTRY\",
+              \"docker pull $IMAGE_URI\",
+              \"docker stop airship || true\",
+              \"docker rm airship || true\",
+              \"docker run -d --name airship --restart unless-stopped -p 80:3000 --env-file /home/ec2-user/.env -v /home/ec2-user/data:/app/data $IMAGE_URI\"
+            ]" \
+            --query "Command.CommandId" --output text)
+
+          echo "SSM Command ID: $COMMAND_ID"
+
+          aws ssm wait command-executed \
+            --region "$AWS_REGION" \
+            --command-id "$COMMAND_ID" \
+            --instance-id "$INSTANCE_ID"
+
+          STATUS=$(aws ssm get-command-invocation \
+            --region "$AWS_REGION" \
+            --command-id "$COMMAND_ID" \
+            --instance-id "$INSTANCE_ID" \
+            --query "Status" \
+            --output text)
+
+          echo "SSM Status: $STATUS"
+
+          aws ssm get-command-invocation \
+            --region "$AWS_REGION" \
+            --command-id "$COMMAND_ID" \
+            --instance-id "$INSTANCE_ID"
+
+          if [ "$STATUS" != "Success" ]; then
+            echo "Deployment failed with SSM status: $STATUS"
+            exit 1
+          fi
