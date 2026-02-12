@@ -2,6 +2,9 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { Button } from "@/shared/ui/button";
+import { Input } from "@/shared/ui/input";
+import { Select } from "@/shared/ui/select";
 
 export function RollbackButton({
   appKey,
@@ -29,10 +32,7 @@ export function RollbackButton({
         `/api/apps/${appKey}/updates/${updateId}/rollback`,
         {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${getSecret()}`,
-          },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ channelName: channel, reason }),
         }
       );
@@ -55,47 +55,36 @@ export function RollbackButton({
     <div className="space-y-2">
       <p className="text-sm font-medium">Rollback</p>
       <div className="flex items-center gap-2">
-        <select
+        <Select
           value={channel}
           onChange={(e) => setChannel(e.target.value)}
-          className="px-2 py-1 text-sm border border-foreground/20 rounded bg-background"
         >
           {channels.map((ch) => (
             <option key={ch} value={ch}>
               {ch}
             </option>
           ))}
-        </select>
-        <input
+        </Select>
+        <Input
+          inputSize="sm"
           type="text"
           value={reason}
           onChange={(e) => setReason(e.target.value)}
           placeholder="Reason (optional)"
-          className="px-2 py-1 text-sm border border-foreground/20 rounded bg-background flex-1"
+          className="flex-1"
         />
-        <button
+        <Button
+          variant="destructive"
+          size="sm"
           onClick={handleRollback}
           disabled={loading}
-          className="px-3 py-1 text-sm bg-red-600 text-white rounded hover:bg-red-700 disabled:opacity-50 transition-colors"
         >
           {loading ? "..." : "Rollback"}
-        </button>
+        </Button>
       </div>
       {result && (
         <p className="text-xs text-foreground/60">{result}</p>
       )}
     </div>
   );
-}
-
-function getSecret(): string {
-  if (typeof window !== "undefined") {
-    let secret = localStorage.getItem("airship_admin_secret");
-    if (!secret) {
-      secret = prompt("Enter admin secret:") ?? "";
-      if (secret) localStorage.setItem("airship_admin_secret", secret);
-    }
-    return secret;
-  }
-  return "";
 }

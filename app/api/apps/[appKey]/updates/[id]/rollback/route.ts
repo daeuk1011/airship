@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/db";
-import { apps, channels, updates, channelAssignments, rollbackHistory } from "@/lib/db/schema";
+import { db } from "@/shared/libs/db";
+import { apps, channels, updates, channelAssignments, rollbackHistory } from "@/shared/libs/db/schema";
 import { eq, and } from "drizzle-orm";
-import { verifyAuth } from "@/lib/auth";
+import { verifyAuth } from "@/shared/libs/auth";
 import { v4 as uuidv4 } from "uuid";
 
 export async function POST(

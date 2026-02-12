@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/db";
-import { apps } from "@/lib/db/schema";
+import { db } from "@/shared/libs/db";
+import { apps } from "@/shared/libs/db/schema";
 import { eq } from "drizzle-orm";
-import { verifyAuth } from "@/lib/auth";
-import { getPresignedUploadUrl } from "@/lib/s3";
+import { verifyAuth } from "@/shared/libs/auth";
+import { getPresignedUploadUrl } from "@/shared/libs/s3";
 import { v4 as uuidv4 } from "uuid";
 
 export async function POST(

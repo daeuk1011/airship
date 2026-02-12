@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/db";
-import { apps, channels, channelAssignments, updates, assets } from "@/lib/db/schema";
+import { db } from "@/shared/libs/db";
+import { apps, channels, channelAssignments, updates, assets } from "@/shared/libs/db/schema";
 import { eq, and } from "drizzle-orm";
-import { getPresignedDownloadUrl } from "@/lib/s3";
+import { getPresignedDownloadUrl } from "@/shared/libs/s3";
 import crypto from "crypto";
 
 function hashClientId(clientId: string, rolloutPercent: number): boolean {

@@ -2,6 +2,9 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { Button } from "@/shared/ui/button";
+import { Input } from "@/shared/ui/input";
+import { Select } from "@/shared/ui/select";
 
 export function PromoteButton({
   appKey,
@@ -35,10 +38,7 @@ export function PromoteButton({
         `/api/apps/${appKey}/updates/${updateId}/promote`,
         {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${getSecret()}`,
-          },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             fromChannel,
             toChannel,
@@ -65,61 +65,48 @@ export function PromoteButton({
     <div className="space-y-2">
       <p className="text-sm font-medium">Promote</p>
       <div className="flex items-center gap-2 flex-wrap">
-        <select
+        <Select
           value={fromChannel}
           onChange={(e) => setFromChannel(e.target.value)}
-          className="px-2 py-1 text-sm border border-foreground/20 rounded bg-background"
         >
           {channels.map((ch) => (
             <option key={ch} value={ch}>
               {ch}
             </option>
           ))}
-        </select>
+        </Select>
         <span className="text-foreground/40 text-sm">&rarr;</span>
-        <select
+        <Select
           value={toChannel}
           onChange={(e) => setToChannel(e.target.value)}
-          className="px-2 py-1 text-sm border border-foreground/20 rounded bg-background"
         >
           {channels.map((ch) => (
             <option key={ch} value={ch}>
               {ch}
             </option>
           ))}
-        </select>
-        <input
+        </Select>
+        <Input
+          inputSize="sm"
           type="number"
           min="0"
           max="100"
           value={rollout}
           onChange={(e) => setRollout(e.target.value)}
-          className="w-16 px-2 py-1 text-sm border border-foreground/20 rounded bg-background"
+          className="w-16"
         />
         <span className="text-xs text-foreground/50">%</span>
-        <button
+        <Button
+          size="sm"
           onClick={handlePromote}
           disabled={loading}
-          className="px-3 py-1 text-sm bg-foreground text-background rounded hover:bg-foreground/90 disabled:opacity-50 transition-colors"
         >
           {loading ? "..." : "Promote"}
-        </button>
+        </Button>
       </div>
       {result && (
         <p className="text-xs text-foreground/60">{result}</p>
       )}
     </div>
   );
-}
-
-function getSecret(): string {
-  if (typeof window !== "undefined") {
-    let secret = localStorage.getItem("airship_admin_secret");
-    if (!secret) {
-      secret = prompt("Enter admin secret:") ?? "";
-      if (secret) localStorage.setItem("airship_admin_secret", secret);
-    }
-    return secret;
-  }
-  return "";
 }
