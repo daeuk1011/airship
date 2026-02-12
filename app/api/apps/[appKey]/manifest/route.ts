@@ -12,6 +12,35 @@ function hashClientId(clientId: string, rolloutPercent: number): boolean {
   return value < rolloutPercent;
 }
 
+function buildMultipartResponse(manifest: object): NextResponse {
+  const boundary = crypto.randomUUID();
+
+  const manifestJson = JSON.stringify(manifest);
+  const extensionsJson = JSON.stringify({ assetRequestHeaders: {} });
+
+  const body = [
+    `--${boundary}`,
+    "Content-Type: application/json; charset=utf-8",
+    "",
+    manifestJson,
+    `--${boundary}`,
+    "Content-Type: application/json",
+    "",
+    extensionsJson,
+    `--${boundary}--`,
+  ].join("\r\n");
+
+  return new NextResponse(body, {
+    status: 200,
+    headers: {
+      "content-type": `multipart/mixed; boundary=${boundary}`,
+      "expo-protocol-version": "1",
+      "expo-sfv-version": "0",
+      "cache-control": "private, max-age=0",
+    },
+  });
+}
+
 export async function GET(
   request: NextRequest,
   context: { params: Promise<{ appKey: string }> }
@@ -159,13 +188,14 @@ async function handleManifest(
     metadata: {
       branchName: channelName,
     },
+    extra: {
+      expoClient: {
+        name: app.appKey,
+        slug: app.appKey,
+        runtimeVersion: update.runtimeVersion,
+      },
+    },
   };
 
-  return NextResponse.json(manifest, {
-    status: 200,
-    headers: {
-      "expo-protocol-version": "1",
-      "expo-sfv-version": "0",
-    },
-  });
+  return buildMultipartResponse(manifest);
 }
