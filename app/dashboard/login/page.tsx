@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
+import { Logo } from "@/shared/ui/logo";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -38,11 +39,14 @@ export default function LoginPage() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background">
       <div className="w-full max-w-sm space-y-6">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold tracking-tight">Airship</h1>
-          <p className="text-sm text-foreground/50 mt-1">
-            Sign in to the dashboard
-          </p>
+        <div className="flex flex-col items-center gap-3">
+          <Logo size={56} />
+          <div className="text-center">
+            <h1 className="text-2xl font-bold tracking-tight">Airship</h1>
+            <p className="text-sm text-foreground/50 mt-1">
+              Sign in to the dashboard
+            </p>
+          </div>
         </div>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>

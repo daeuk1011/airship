@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { LogoutButton } from "@/features/auth/components/logout-button";
+import { Logo } from "@/shared/ui/logo";
 
 export default function MainDashboardLayout({
   children,
@@ -10,10 +11,13 @@ export default function MainDashboardLayout({
     <div className="flex h-screen bg-background">
       <aside className="w-56 shrink-0 border-r border-foreground/10 bg-foreground/[0.02] flex flex-col">
         <div className="p-4 border-b border-foreground/10">
-          <Link href="/dashboard" className="text-lg font-bold tracking-tight">
-            Airship
+          <Link href="/dashboard" className="flex items-center gap-2">
+            <Logo size={28} />
+            <div>
+              <span className="text-lg font-bold tracking-tight">Airship</span>
+              <p className="text-xs text-foreground/50 -mt-0.5">OTA Update Server</p>
+            </div>
           </Link>
-          <p className="text-xs text-foreground/50 mt-0.5">OTA Update Server</p>
         </div>
         <nav className="p-2 flex flex-col gap-0.5 flex-1">
           <NavLink href="/dashboard">Overview</NavLink>
