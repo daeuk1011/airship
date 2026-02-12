@@ -1,4 +1,4 @@
-import { type InputHTMLAttributes } from "react";
+import { forwardRef, type InputHTMLAttributes } from "react";
 
 const inputSizes = {
   sm: "px-2 py-1 text-sm border border-foreground/20 rounded bg-background",
@@ -9,15 +9,14 @@ type InputProps = InputHTMLAttributes<HTMLInputElement> & {
   inputSize?: "sm" | "md";
 };
 
-export function Input({
-  inputSize = "md",
-  className = "",
-  ...props
-}: InputProps) {
-  return (
-    <input
-      className={`${inputSizes[inputSize]} ${className}`}
-      {...props}
-    />
-  );
-}
+export const Input = forwardRef<HTMLInputElement, InputProps>(
+  function Input({ inputSize = "md", className = "", ...props }, ref) {
+    return (
+      <input
+        ref={ref}
+        className={`${inputSizes[inputSize]} ${className}`}
+        {...props}
+      />
+    );
+  }
+);

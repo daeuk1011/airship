@@ -1,59 +1,63 @@
 "use client";
 
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
+import { createAppSchema, type CreateAppInput } from "@/shared/validation/apps";
 
 export function CreateAppForm() {
   const router = useRouter();
-  const [appKey, setAppKey] = useState("");
-  const [name, setName] = useState("");
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
+  const {
+    register,
+    handleSubmit,
+    reset,
+    setError,
+    formState: { errors, isSubmitting },
+  } = useForm<CreateAppInput>({
+    resolver: zodResolver(createAppSchema),
+    defaultValues: {
+      appKey: "",
+      name: "",
+    },
+  });
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setError("");
-    setLoading(true);
-
+  async function onSubmit(values: CreateAppInput) {
     try {
       const res = await fetch("/api/apps", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ appKey, name }),
+        body: JSON.stringify(values),
       });
 
       if (!res.ok) {
-        const data = await res.json();
-        setError(data.error ?? "Failed to create app");
+        const data = (await res.json().catch(() => null)) as { error?: string } | null;
+        setError("root", { message: data?.error ?? "Failed to create app" });
         return;
       }
 
-      setAppKey("");
-      setName("");
+      reset();
       router.refresh();
     } catch {
-      setError("Network error");
-    } finally {
-      setLoading(false);
+      setError("root", { message: "Network error" });
     }
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex items-end gap-3">
+    <form onSubmit={handleSubmit(onSubmit)} className="flex items-end gap-3">
       <div>
         <label className="block text-xs text-foreground/50 mb-1">
           App Key
         </label>
         <Input
           type="text"
-          value={appKey}
-          onChange={(e) => setAppKey(e.target.value)}
+          {...register("appKey")}
           placeholder="my-app"
-          required
-          pattern="[a-z0-9-]+"
         />
+        {errors.appKey && (
+          <p className="mt-1 text-sm text-red-500">{errors.appKey.message}</p>
+        )}
       </div>
       <div>
         <label className="block text-xs text-foreground/50 mb-1">
@@ -61,16 +65,17 @@ export function CreateAppForm() {
         </label>
         <Input
           type="text"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
+          {...register("name")}
           placeholder="My App"
-          required
         />
+        {errors.name && (
+          <p className="mt-1 text-sm text-red-500">{errors.name.message}</p>
+        )}
       </div>
-      <Button type="submit" disabled={loading}>
-        {loading ? "Creating..." : "Create App"}
+      <Button type="submit" disabled={isSubmitting}>
+        {isSubmitting ? "Creating..." : "Create App"}
       </Button>
-      {error && <p className="text-sm text-red-500">{error}</p>}
+      {errors.root?.message && <p className="text-sm text-red-500">{errors.root.message}</p>}
     </form>
   );
 }

@@ -1,38 +1,40 @@
 "use client";
 
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
 import { Logo } from "@/shared/ui/logo";
+import { loginSchema, type LoginInput } from "@/shared/validation/auth";
 
 export default function LoginPage() {
   const router = useRouter();
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
+  const {
+    register,
+    handleSubmit,
+    setError,
+    formState: { errors, isSubmitting },
+  } = useForm<LoginInput>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: { password: "" },
+  });
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setError("");
-    setLoading(true);
-
+  async function onSubmit(values: LoginInput) {
     try {
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ password }),
+        body: JSON.stringify(values),
       });
 
       if (res.ok) {
         router.push("/dashboard");
       } else {
-        setError("Invalid password");
+        setError("root", { message: "Invalid password" });
       }
     } catch {
-      setError("Network error");
-    } finally {
-      setLoading(false);
+      setError("root", { message: "Network error" });
     }
   }
 
@@ -48,7 +50,7 @@ export default function LoginPage() {
             </p>
           </div>
         </div>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div>
             <label
               htmlFor="password"
@@ -59,20 +61,23 @@ export default function LoginPage() {
             <Input
               id="password"
               type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
+              {...register("password")}
               autoFocus
               className="w-full"
             />
+            {errors.password && (
+              <p className="mt-1 text-sm text-red-500">{errors.password.message}</p>
+            )}
           </div>
-          {error && <p className="text-sm text-red-500">{error}</p>}
+          {errors.root?.message && (
+            <p className="text-sm text-red-500">{errors.root.message}</p>
+          )}
           <Button
             type="submit"
-            disabled={loading}
+            disabled={isSubmitting}
             className="w-full"
           >
-            {loading ? "Signing in..." : "Sign in"}
+            {isSubmitting ? "Signing in..." : "Sign in"}
           </Button>
         </form>
       </div>
