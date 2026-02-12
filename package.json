@@ -7,6 +7,10 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "test": "bun test",
+    "test:integration": "bash scripts/test-integration.sh",
+    "verify:platform": "bash scripts/verify-platform-assignment.sh",
+    "rehearse:staging": "bash scripts/rehearse-staging-ota-flow.sh",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:studio": "drizzle-kit studio"
@@ -14,12 +18,15 @@
   "dependencies": {
     "@aws-sdk/client-s3": "^3.988.0",
     "@aws-sdk/s3-request-presigner": "^3.988.0",
+    "@hookform/resolvers": "^5.2.2",
     "better-sqlite3": "^12.6.2",
     "drizzle-orm": "^0.45.1",
     "next": "16.1.6",
     "react": "19.2.3",
     "react-dom": "19.2.3",
-    "uuid": "^13.0.0"
+    "react-hook-form": "^7.71.1",
+    "uuid": "^13.0.0",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

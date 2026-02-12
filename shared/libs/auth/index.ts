@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createHmac, timingSafeEqual } from "node:crypto";
+import { errorResponse } from "@/shared/libs/http/error";
 
 const SESSION_COOKIE = "airship_session";
 
@@ -35,5 +36,5 @@ export function verifyAuth(request: NextRequest): NextResponse | null {
     return null;
   }
 
-  return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  return errorResponse(401, "UNAUTHORIZED", "Unauthorized");
 }

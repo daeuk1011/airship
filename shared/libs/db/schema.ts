@@ -76,14 +76,16 @@ export const channelAssignments = sqliteTable(
       .notNull()
       .references(() => updates.id),
     runtimeVersion: text("runtime_version").notNull(),
+    platform: text("platform").notNull(),
     rolloutPercent: real("rollout_percent").notNull().default(100),
     updatedAt: integer("updated_at").notNull(),
   },
   (table) => [
-    uniqueIndex("ca_app_channel_rv_unique").on(
+    uniqueIndex("ca_app_channel_rv_platform_unique").on(
       table.appId,
       table.channelId,
-      table.runtimeVersion
+      table.runtimeVersion,
+      table.platform
     ),
   ]
 );

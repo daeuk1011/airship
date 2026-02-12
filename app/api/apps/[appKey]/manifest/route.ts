@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/shared/libs/db";
 import { apps, channels, channelAssignments, updates, assets } from "@/shared/libs/db/schema";
 import { eq, and } from "drizzle-orm";
+import { errorResponse } from "@/shared/libs/http/error";
 import { getPresignedDownloadUrl } from "@/shared/libs/s3";
 import crypto from "crypto";
 
@@ -24,7 +25,7 @@ export async function POST(
     .get();
 
   if (!app) {
-    return NextResponse.json({ error: "App not found" }, { status: 404 });
+    return errorResponse(404, "NOT_FOUND", "App not found");
   }
 
   const platform = request.headers.get("expo-platform");
@@ -32,17 +33,11 @@ export async function POST(
   const channelName = request.headers.get("expo-channel-name") ?? "production";
 
   if (!platform) {
-    return NextResponse.json(
-      { error: "Missing expo-platform header" },
-      { status: 400 }
-    );
+    return errorResponse(400, "BAD_REQUEST", "Missing expo-platform header");
   }
 
   if (!runtimeVersion) {
-    return NextResponse.json(
-      { error: "Missing expo-runtime-version header" },
-      { status: 400 }
-    );
+    return errorResponse(400, "BAD_REQUEST", "Missing expo-runtime-version header");
   }
 
   const channel = db
@@ -65,7 +60,8 @@ export async function POST(
       and(
         eq(channelAssignments.appId, app.id),
         eq(channelAssignments.channelId, channel.id),
-        eq(channelAssignments.runtimeVersion, runtimeVersion)
+        eq(channelAssignments.runtimeVersion, runtimeVersion),
+        eq(channelAssignments.platform, platform)
       )
     )
     .get();
@@ -81,8 +77,13 @@ export async function POST(
   if (assignment.rolloutPercent < 100) {
     const clientId =
       request.headers.get("expo-current-update-id") ??
-      request.headers.get("eas-client-id") ??
-      "anonymous";
+      request.headers.get("eas-client-id");
+    if (!clientId) {
+      return new NextResponse(null, {
+        status: 204,
+        headers: { "expo-protocol-version": "1" },
+      });
+    }
     if (!hashClientId(clientId, assignment.rolloutPercent)) {
       return new NextResponse(null, {
         status: 204,

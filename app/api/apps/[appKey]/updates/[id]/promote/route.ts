@@ -3,6 +3,8 @@ import { db } from "@/shared/libs/db";
 import { apps, channels, updates, channelAssignments } from "@/shared/libs/db/schema";
 import { eq, and } from "drizzle-orm";
 import { verifyAuth } from "@/shared/libs/auth";
+import { errorResponse, invalidRequestFromZod } from "@/shared/libs/http/error";
+import { promoteUpdateSchema } from "@/shared/validation/updates";
 import { v4 as uuidv4 } from "uuid";
 
 export async function POST(
@@ -17,7 +19,7 @@ export async function POST(
   const app = db.select().from(apps).where(eq(apps.appKey, appKey)).get();
 
   if (!app) {
-    return NextResponse.json({ error: "App not found" }, { status: 404 });
+    return errorResponse(404, "NOT_FOUND", "App not found");
   }
 
   const update = db
@@ -27,18 +29,15 @@ export async function POST(
     .get();
 
   if (!update) {
-    return NextResponse.json({ error: "Update not found" }, { status: 404 });
+    return errorResponse(404, "NOT_FOUND", "Update not found");
   }
 
-  const body = await request.json();
-  const { fromChannel, toChannel, rolloutPercent } = body;
-
-  if (!fromChannel || !toChannel) {
-    return NextResponse.json(
-      { error: "Missing required fields: fromChannel, toChannel" },
-      { status: 400 }
-    );
+  const rawBody = await request.json().catch(() => null);
+  const parsed = promoteUpdateSchema.safeParse(rawBody);
+  if (!parsed.success) {
+    return invalidRequestFromZod(parsed.error);
   }
+  const { fromChannel, toChannel, rolloutPercent } = parsed.data;
 
   // Verify fromChannel assignment
   const fromCh = db
@@ -48,10 +47,7 @@ export async function POST(
     .get();
 
   if (!fromCh) {
-    return NextResponse.json(
-      { error: `Channel '${fromChannel}' not found` },
-      { status: 404 }
-    );
+    return errorResponse(404, "NOT_FOUND", `Channel '${fromChannel}' not found`);
   }
 
   const fromAssignment = db
@@ -62,16 +58,14 @@ export async function POST(
         eq(channelAssignments.appId, app.id),
         eq(channelAssignments.channelId, fromCh.id),
         eq(channelAssignments.runtimeVersion, update.runtimeVersion),
+        eq(channelAssignments.platform, update.platform),
         eq(channelAssignments.updateId, updateId)
       )
     )
     .get();
 
   if (!fromAssignment) {
-    return NextResponse.json(
-      { error: `Update is not currently assigned to '${fromChannel}' channel` },
-      { status: 400 }
-    );
+    return errorResponse(400, "BAD_REQUEST", `Update is not currently assigned to '${fromChannel}' channel`);
   }
 
   // Get or create toChannel
@@ -103,7 +97,8 @@ export async function POST(
       and(
         eq(channelAssignments.appId, app.id),
         eq(channelAssignments.channelId, toCh.id),
-        eq(channelAssignments.runtimeVersion, update.runtimeVersion)
+        eq(channelAssignments.runtimeVersion, update.runtimeVersion),
+        eq(channelAssignments.platform, update.platform)
       )
     )
     .get();
@@ -123,6 +118,7 @@ export async function POST(
         channelId: toCh.id,
         updateId,
         runtimeVersion: update.runtimeVersion,
+        platform: update.platform,
         rolloutPercent: percent,
         updatedAt: now,
       })

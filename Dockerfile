@@ -1,5 +1,6 @@
 FROM oven/bun:1 AS deps
 WORKDIR /app
+RUN apt-get update && apt-get install -y python3 make g++ --no-install-recommends && rm -rf /var/lib/apt/lists/*
 COPY package.json bun.lock ./
 RUN bun install --frozen-lockfile
 
@@ -8,22 +9,7 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN bun run build
-RUN printf '%s\n' \
-  'import { migrate } from "drizzle-orm/better-sqlite3/migrator";' \
-  'import Database from "better-sqlite3";' \
-  'import { drizzle } from "drizzle-orm/better-sqlite3";' \
-  'import path from "path";' \
-  'import fs from "fs";' \
-  'const p = (process.env.DATABASE_URL || "file:./data/ota.db").replace(/^file:/, "");' \
-  'const d = path.dirname(p);' \
-  'if (!fs.existsSync(d)) fs.mkdirSync(d, { recursive: true });' \
-  'const s = new Database(p);' \
-  's.pragma("journal_mode = WAL");' \
-  's.pragma("foreign_keys = ON");' \
-  'migrate(drizzle(s), { migrationsFolder: "./drizzle" });' \
-  'console.log("Migrations applied.");' \
-  's.close();' > /tmp/migrate.ts && \
-  bun build --target=node --external=better-sqlite3 /tmp/migrate.ts --outfile=dist/migrate.js
+RUN bun build --target=node --external=better-sqlite3 scripts/migrate.ts --outfile=dist/migrate.js
 
 FROM node:20-slim AS runner
 WORKDIR /app

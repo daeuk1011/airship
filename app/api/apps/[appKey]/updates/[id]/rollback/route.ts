@@ -3,6 +3,8 @@ import { db } from "@/shared/libs/db";
 import { apps, channels, updates, channelAssignments, rollbackHistory } from "@/shared/libs/db/schema";
 import { eq, and } from "drizzle-orm";
 import { verifyAuth } from "@/shared/libs/auth";
+import { errorResponse, invalidRequestFromZod } from "@/shared/libs/http/error";
+import { rollbackUpdateSchema } from "@/shared/validation/updates";
 import { v4 as uuidv4 } from "uuid";
 
 export async function POST(
@@ -17,7 +19,7 @@ export async function POST(
   const app = db.select().from(apps).where(eq(apps.appKey, appKey)).get();
 
   if (!app) {
-    return NextResponse.json({ error: "App not found" }, { status: 404 });
+    return errorResponse(404, "NOT_FOUND", "App not found");
   }
 
   const targetUpdate = db
@@ -27,18 +29,15 @@ export async function POST(
     .get();
 
   if (!targetUpdate) {
-    return NextResponse.json({ error: "Target update not found" }, { status: 404 });
+    return errorResponse(404, "NOT_FOUND", "Target update not found");
   }
 
-  const body = await request.json();
-  const { channelName, reason } = body;
-
-  if (!channelName) {
-    return NextResponse.json(
-      { error: "Missing required field: channelName" },
-      { status: 400 }
-    );
+  const rawBody = await request.json().catch(() => null);
+  const parsed = rollbackUpdateSchema.safeParse(rawBody);
+  if (!parsed.success) {
+    return invalidRequestFromZod(parsed.error);
   }
+  const { channelName, reason } = parsed.data;
 
   const channel = db
     .select()
@@ -47,7 +46,7 @@ export async function POST(
     .get();
 
   if (!channel) {
-    return NextResponse.json({ error: "Channel not found" }, { status: 404 });
+    return errorResponse(404, "NOT_FOUND", "Channel not found");
   }
 
   const assignment = db
@@ -57,16 +56,14 @@ export async function POST(
       and(
         eq(channelAssignments.appId, app.id),
         eq(channelAssignments.channelId, channel.id),
-        eq(channelAssignments.runtimeVersion, targetUpdate.runtimeVersion)
+        eq(channelAssignments.runtimeVersion, targetUpdate.runtimeVersion),
+        eq(channelAssignments.platform, targetUpdate.platform)
       )
     )
     .get();
 
   if (!assignment) {
-    return NextResponse.json(
-      { error: "No channel assignment found for this runtime version" },
-      { status: 404 }
-    );
+    return errorResponse(404, "NOT_FOUND", "No channel assignment found for this runtime version");
   }
 
   const fromUpdateId = assignment.updateId;
