@@ -20,6 +20,26 @@ You can start editing the page by modifying `app/page.tsx`. The page auto-update
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
+## Validation and Integration Tests
+
+```bash
+bun run test:integration
+bun run verify:platform
+```
+
+Staging cross-platform OTA verification checklist:
+- `docs/staging-cross-platform-checklist.md`
+
+Staging OTA full-flow rehearsal:
+
+```bash
+STAGING_BASE_URL="https://<staging-host>" \
+STAGING_ADMIN_SECRET="<admin-secret>" \
+STAGING_APP_KEY="my-app" \
+STAGING_RUNTIME_VERSION="1.0.0" \
+bun run rehearse:staging
+```
+
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:
