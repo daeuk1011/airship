@@ -1,0 +1,86 @@
+# Quick Start (10 min)
+
+If this is your first time using Airship, follow this page only.
+
+---
+
+## Goal
+
+Deliver one OTA update to `staging`, then promote it to `production`.
+
+---
+
+## 1) Prepare Once
+
+1. Log in to Dashboard.
+2. Go to **Apps** and create an app (example: `my-app`).
+3. Go to **Tokens** and create an API token.
+4. Save the token in your shell:
+
+```bash
+export AIRSHIP_ADMIN_SECRET="airship_xxx..."
+export AIRSHIP_SERVER_URL="http://<your-server>"
+```
+
+---
+
+## 2) Build Bundle
+
+```bash
+npx expo export --platform ios --output-dir dist
+```
+
+Use the generated iOS bundle path in the next step.
+
+---
+
+## 3) Publish to Staging
+
+```bash
+./scripts/publish-update.sh \
+  --app-key my-app \
+  --runtime-version 1.0.0 \
+  --platform ios \
+  --bundle ./dist/bundles/ios-xxxxx.js
+```
+
+Expected result:
+- Update appears in Dashboard > App detail > Updates.
+- Channel badge shows `staging`.
+
+---
+
+## 4) Promote to Production
+
+1. Open the uploaded update detail page.
+2. In **Promote**, choose `staging -> production`.
+3. Keep rollout at `100%`, then click **Promote**.
+
+---
+
+## 5) Quick Validation
+
+```bash
+curl -i -X POST "$AIRSHIP_SERVER_URL/api/apps/my-app/manifest" \
+  -H "expo-platform: ios" \
+  -H "expo-runtime-version: 1.0.0" \
+  -H "expo-channel-name: production"
+```
+
+Expected: `HTTP 200` with multipart response including manifest.
+
+---
+
+## Common Errors
+
+- `401 Unauthorized`: token is invalid, revoked, or missing.
+- `App not found`: wrong `--app-key`.
+- `no such table: api_tokens`: server migration not applied yet.
+
+---
+
+## Next
+
+- Need CI automation: open **OTA Publish Guide**.
+- Need staging validation: open **Staging Verification Checklist**.
+- Need production operations: open **Production Operations Checklist**.

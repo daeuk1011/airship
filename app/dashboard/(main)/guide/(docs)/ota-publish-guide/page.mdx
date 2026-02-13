@@ -1,80 +1,66 @@
 # OTA Publish Guide
 
-End-to-end workflow from bundle export to production deployment.
+Use this guide when you already completed **Quick Start** and want repeatable OTA publishing.
+
+- First time user: go to **Quick Start (10 min)**.
+- This page: daily publish flow and CI automation.
 
 ---
 
-## Publish Flow
-
-> **Bundle Export** &rarr; **publish-update.sh** &rarr; **Auto-assigned to staging** &rarr; **Promote to production on dashboard**
-
----
-
-## Prerequisites
-
-**Tools**: `curl`, `jq`, `shasum` (macOS) or `sha256sum` (Linux)
-
-**Authentication** — two methods are supported:
-
-- **Admin Secret** (`Bearer <ADMIN_SECRET>`) — for local development and initial setup
-- **API Token** (`Bearer airship_xxx...`) — for CI/CD and automation **(recommended)**
-
-Create API Tokens on the **Tokens** page in the dashboard.
-
-**Environment Variables**:
-
-- `AIRSHIP_ADMIN_SECRET` — Bearer token (Admin Secret or API Token)
-- `AIRSHIP_SERVER_URL` — Airship server URL (used when `--server` is not specified)
-
----
-
-## Manual Deploy (Local)
-
-### Step 1. Export Expo Bundle
+## Fast Path (Most Common)
 
 ```bash
+export AIRSHIP_ADMIN_SECRET="airship_xxx..."
+export AIRSHIP_SERVER_URL="https://ota.example.com"
+
 npx expo export --platform ios --output-dir dist
-npx expo export --platform android --output-dir dist
-```
-
-### Step 2. Publish OTA Update
-
-```bash
-export AIRSHIP_ADMIN_SECRET="your-token"
 
 ./scripts/publish-update.sh \
-  --server https://ota.example.com \
   --app-key my-app \
   --runtime-version 1.0.0 \
   --platform ios \
   --bundle ./dist/bundles/ios-xxxxx.js
 ```
 
-> Default channel is `staging`. Use `--channel production` to target a different channel.
-
-### Step 3. Promote on Dashboard
-
-1. Go to **App** &rarr; click the update in the Updates list
-2. The currently assigned channel is shown as a badge
-3. In the **Promote** section, select `staging → production` and click Promote
+Then promote on dashboard: `staging -> production`.
 
 ---
 
-## CI Integration (GitHub Actions)
+## Required Inputs
 
-Automatically publish OTA updates after building the bundle in your app repo.
+| Input | Example | Notes |
+|---|---|---|
+| `AIRSHIP_ADMIN_SECRET` | `airship_xxx...` | API token recommended |
+| `AIRSHIP_SERVER_URL` | `https://ota.example.com` | Base URL |
+| `--app-key` | `my-app` | Must exist in Dashboard |
+| `--runtime-version` | `1.0.0` | Must match client runtime |
+| `--platform` | `ios` / `android` | One platform per command |
+| `--bundle` | `./dist/bundles/...js` | Exported bundle path |
 
-### Secrets Setup
+---
 
-Add the following in your app repo under Settings &rarr; Secrets and variables &rarr; Actions:
+## Script Reference
 
-- `AIRSHIP_ADMIN_SECRET` — API Token
-- `AIRSHIP_SERVER_URL` — Airship server URL
+```bash
+./scripts/publish-update.sh --help
+```
 
-### Workflow Example
+| Option | Description | Default |
+|---|---|---|
+| `--server URL` | Airship server URL | `$AIRSHIP_SERVER_URL` |
+| `--app-key KEY` | App key | required |
+| `--runtime-version VER` | Runtime version | required |
+| `--platform PLATFORM` | `ios` or `android` | required |
+| `--bundle PATH` | Bundle file path | required |
+| `--channel NAME` | Target channel | `staging` |
+
+---
+
+## CI Automation (GitHub Actions)
+
+Use matrix to publish iOS and Android in parallel.
 
 ```yaml
-# .github/workflows/ota-publish.yml (add to app repo)
 name: OTA Publish
 on:
   push:
@@ -89,26 +75,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: 20
 
-      - name: Install & Export
-        run: |
+      - run: |
           npm ci
-          npx expo export \
-            --platform ${{ matrix.platform }} \
-            --output-dir dist
+          npx expo export --platform ${{ matrix.platform }} --output-dir dist
 
-      - name: Download publish script
-        run: |
-          curl -sfO ${{ secrets.AIRSHIP_SERVER_URL }}/publish-update.sh \
-            || curl -sfO https://raw.githubusercontent.com/<org>/airship/main/scripts/publish-update.sh
+      - run: |
+          curl -sfO ${{ secrets.AIRSHIP_SERVER_URL }}/publish-update.sh
           chmod +x publish-update.sh
 
-      - name: Publish OTA
-        env:
+      - env:
           AIRSHIP_ADMIN_SECRET: ${{ secrets.AIRSHIP_ADMIN_SECRET }}
           AIRSHIP_SERVER_URL: ${{ secrets.AIRSHIP_SERVER_URL }}
         run: |
@@ -119,30 +98,18 @@ jobs:
             --bundle dist/bundles/${{ matrix.platform }}.js
 ```
 
-> iOS and Android run in parallel via the `matrix` strategy.
-> Default channel is `staging` — promote to production from the dashboard.
+---
+
+## Troubleshooting
+
+- `401 Unauthorized`: token missing/invalid/revoked.
+- `App not found`: wrong app key.
+- `Bundle not found on S3`: upload URL expired or wrong key in commit.
+- `no such table: api_tokens`: server migration is not applied.
 
 ---
 
-## Script Options Reference
+## Next
 
-| Option | Description | Default |
-|---|---|---|
-| `--server URL` | Airship server URL | `$AIRSHIP_SERVER_URL` |
-| `--app-key KEY` | App key | *required* |
-| `--runtime-version VER` | Runtime version | *required* |
-| `--platform PLATFORM` | `ios` or `android` | *required* |
-| `--bundle PATH` | Bundle file path | *required* |
-| `--channel NAME` | Target channel | `staging` |
-
----
-
-## Dashboard Features After Deployment
-
-| Feature | Location | Description |
-|---|---|---|
-| **Grouped View** | App detail | View iOS + Android pairs grouped together |
-| **Bundle Size** | App detail / Update detail | Bundle size for each update |
-| **Runtime Versions** | App detail | Update count and channel assignment status per RV |
-| **Enable / Disable** | Update detail | Disable an update to immediately stop delivery |
-| **Rollout %** | Channels page | Gradual rollout from 0% to 100% |
+- Validation before release: **Staging Verification Checklist**
+- Operations and incidents: **Production Operations Checklist**

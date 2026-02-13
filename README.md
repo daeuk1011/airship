@@ -27,6 +27,13 @@ bun run test:integration
 bun run verify:platform
 ```
 
+## Documentation (Simple Path First)
+
+- Start here: `docs/quick-start.md`
+- Daily publish flow: `docs/ota-publish-guide.md`
+- Staging verification: `docs/staging-cross-platform-checklist.md`
+- Production operations: `docs/production-operations-checklist.md`
+
 Staging cross-platform OTA verification checklist:
 - `docs/staging-cross-platform-checklist.md`
 - `docs/production-operations-checklist.md`
