@@ -7,8 +7,10 @@ import { Card } from "@/shared/ui/card";
 import { CardList } from "@/shared/ui/card";
 import { RollbackButton } from "@/features/updates/components/rollback-button";
 import { PromoteButton } from "@/features/updates/components/promote-button";
+import { ToggleUpdateButton } from "@/features/updates/components/toggle-update-button";
 import { CopyButton } from "@/shared/ui/copy-button";
 import { timeAgo, formatAbsolute } from "@/shared/utils/time";
+import { formatBytes } from "@/shared/utils/format";
 
 export const dynamic = "force-dynamic";
 
@@ -107,11 +109,7 @@ export default async function UpdateDetailPage({
             <CopyRow label="Bundle Hash" value={update.bundleHash} mono />
             <Row
               label="Bundle Size"
-              value={
-                update.bundleSize
-                  ? `${(update.bundleSize / 1024).toFixed(1)} KB`
-                  : "N/A"
-              }
+              value={formatBytes(update.bundleSize)}
             />
             <div className="flex justify-between">
               <dt className="text-foreground/50">Created</dt>
@@ -144,6 +142,11 @@ export default async function UpdateDetailPage({
             Actions
           </h2>
           <div className="space-y-3">
+            <ToggleUpdateButton
+              appKey={appKey}
+              updateId={update.id}
+              enabled={!!update.enabled}
+            />
             <RollbackButton
               appKey={appKey}
               updateId={update.id}

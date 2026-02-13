@@ -1,6 +1,6 @@
 import { db } from "@/shared/libs/db";
-import { apps, updates, channels, channelAssignments } from "@/shared/libs/db/schema";
-import { count, desc, eq } from "drizzle-orm";
+import { apps, updates, channels, channelAssignments, rollbackHistory } from "@/shared/libs/db/schema";
+import { count, desc, eq, gte, and } from "drizzle-orm";
 import { Card, CardList } from "@/shared/ui/card";
 import { timeAgo, formatAbsolute } from "@/shared/utils/time";
 import Link from "next/link";
@@ -12,10 +12,33 @@ export default function DashboardOverview() {
   const [updateCount] = db.select({ value: count() }).from(updates).all();
   const [channelCount] = db.select({ value: count() }).from(channels).all();
 
+  const [iosUpdateCount] = db
+    .select({ value: count() })
+    .from(updates)
+    .where(eq(updates.platform, "ios"))
+    .all();
+  const [androidUpdateCount] = db
+    .select({ value: count() })
+    .from(updates)
+    .where(eq(updates.platform, "android"))
+    .all();
+  const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+  const [recentRollbackCount] = db
+    .select({ value: count() })
+    .from(rollbackHistory)
+    .where(gte(rollbackHistory.createdAt, sevenDaysAgo))
+    .all();
+
   const stats = [
     { label: "Apps", value: appCount.value },
     { label: "Updates", value: updateCount.value },
     { label: "Channels", value: channelCount.value },
+  ];
+
+  const subStats = [
+    { label: "iOS Updates", value: iosUpdateCount.value },
+    { label: "Android Updates", value: androidUpdateCount.value },
+    { label: "Rollbacks (7d)", value: recentRollbackCount.value },
   ];
 
   const recentUpdates = db
@@ -70,6 +93,15 @@ export default function DashboardOverview() {
             <p className="text-sm text-foreground/50">{stat.label}</p>
             <p className="text-3xl font-bold mt-1">{stat.value}</p>
           </Card>
+        ))}
+      </div>
+
+      <div className="grid grid-cols-3 gap-4 mt-3">
+        {subStats.map((stat) => (
+          <div key={stat.label} className="px-4 py-3 rounded-lg bg-foreground/[0.03]">
+            <p className="text-xs text-foreground/40">{stat.label}</p>
+            <p className="text-lg font-semibold mt-0.5">{stat.value}</p>
+          </div>
         ))}
       </div>
 
