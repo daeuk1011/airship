@@ -183,7 +183,7 @@ async function handleManifest(
     runtimeVersion: update.runtimeVersion,
     launchAsset: {
       hash: hexToBase64Url(update.bundleHash),
-      key: "bundle",
+      key: update.bundleHash,
       fileExtension: ".bundle",
       contentType: "application/javascript",
       url: bundleUrl,
