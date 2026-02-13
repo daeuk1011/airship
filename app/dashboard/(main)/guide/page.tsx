@@ -98,13 +98,18 @@ export default function GuidePage() {
 
         <Card>
           <h2 className="text-sm font-semibold text-foreground/50 mb-3 uppercase tracking-wider">
-            GitHub Actions 자동 배포
+            앱 레포 CI 연동
           </h2>
           <div className="space-y-4 text-sm">
+            <p className="text-foreground/70">
+              앱 레포의 GitHub Actions에서 번들 빌드 후{" "}
+              <code className="bg-foreground/5 px-1 py-0.5 rounded text-xs font-mono">publish-update.sh</code>를
+              직접 호출합니다.
+            </p>
             <div>
-              <h3 className="font-medium mb-1">필수 Secrets 설정</h3>
+              <h3 className="font-medium mb-1">1. Secrets 설정</h3>
               <p className="text-foreground/70 mb-2">
-                Repository Settings → Secrets and variables → Actions에서 추가:
+                앱 레포의 Settings → Secrets and variables → Actions에서 추가:
               </p>
               <ul className="text-foreground/70 space-y-1">
                 <li>
@@ -116,51 +121,57 @@ export default function GuidePage() {
               </ul>
             </div>
             <div>
-              <h3 className="font-medium mb-1">workflow_dispatch 입력</h3>
-              <p className="text-foreground/70 mb-2">
-                GitHub Actions → OTA Publish → Run workflow에서 입력:
+              <h3 className="font-medium mb-1">2. Workflow 예시</h3>
+              <CodeBlock>{`# .github/workflows/ota-publish.yml (앱 레포에 추가)
+name: OTA Publish
+on:
+  push:
+    branches: [main]
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        platform: [ios, android]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install & Export
+        run: |
+          npm ci
+          npx expo export \\
+            --platform \${{ matrix.platform }} \\
+            --output-dir dist
+
+      - name: Download publish script
+        run: |
+          curl -sfO \${{ secrets.AIRSHIP_SERVER_URL }}/publish-update.sh \\
+            || curl -sfO https://raw.githubusercontent.com/\\
+               <org>/airship/main/scripts/publish-update.sh
+          chmod +x publish-update.sh
+
+      - name: Publish OTA
+        env:
+          AIRSHIP_ADMIN_SECRET: \${{ secrets.AIRSHIP_ADMIN_SECRET }}
+          AIRSHIP_SERVER_URL: \${{ secrets.AIRSHIP_SERVER_URL }}
+        run: |
+          ./publish-update.sh \\
+            --app-key my-app \\
+            --runtime-version 1.0.0 \\
+            --platform \${{ matrix.platform }} \\
+            --bundle dist/bundles/\${{ matrix.platform }}.js`}</CodeBlock>
+              <p className="text-foreground/60 mt-2">
+                matrix 전략으로 iOS/Android가 병렬 실행됩니다.
+                기본 채널은{" "}
+                <code className="bg-foreground/5 px-1 py-0.5 rounded text-xs font-mono">staging</code>이며,
+                대시보드에서 production으로 promote하세요.
               </p>
-              <table className="w-full text-xs">
-                <thead>
-                  <tr className="border-b border-foreground/10">
-                    <th className="text-left py-1.5 font-medium">입력</th>
-                    <th className="text-left py-1.5 font-medium">설명</th>
-                    <th className="text-left py-1.5 font-medium">예시</th>
-                  </tr>
-                </thead>
-                <tbody className="text-foreground/70">
-                  <tr className="border-b border-foreground/5">
-                    <td className="py-1.5 font-mono">appKey</td>
-                    <td className="py-1.5">앱 키</td>
-                    <td className="py-1.5 font-mono">my-app</td>
-                  </tr>
-                  <tr className="border-b border-foreground/5">
-                    <td className="py-1.5 font-mono">runtimeVersion</td>
-                    <td className="py-1.5">런타임 버전</td>
-                    <td className="py-1.5 font-mono">1.0.0</td>
-                  </tr>
-                  <tr className="border-b border-foreground/5">
-                    <td className="py-1.5 font-mono">platform</td>
-                    <td className="py-1.5">플랫폼</td>
-                    <td className="py-1.5 font-mono">both / ios / android</td>
-                  </tr>
-                  <tr className="border-b border-foreground/5">
-                    <td className="py-1.5 font-mono">iosBundlePath</td>
-                    <td className="py-1.5">iOS 번들 파일 경로</td>
-                    <td className="py-1.5 font-mono">dist/bundles/ios.js</td>
-                  </tr>
-                  <tr className="border-b border-foreground/5">
-                    <td className="py-1.5 font-mono">androidBundlePath</td>
-                    <td className="py-1.5">Android 번들 파일 경로</td>
-                    <td className="py-1.5 font-mono">dist/bundles/android.js</td>
-                  </tr>
-                  <tr>
-                    <td className="py-1.5 font-mono">channel</td>
-                    <td className="py-1.5">대상 채널 (기본: staging)</td>
-                    <td className="py-1.5 font-mono">staging</td>
-                  </tr>
-                </tbody>
-              </table>
             </div>
           </div>
         </Card>
