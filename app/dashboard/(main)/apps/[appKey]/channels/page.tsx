@@ -6,6 +6,7 @@ import Link from "next/link";
 import { BackLink } from "@/shared/ui/back-link";
 import { Card } from "@/shared/ui/card";
 import { timeAgo, formatAbsolute } from "@/shared/utils/time";
+import { EditRolloutButton } from "@/features/channels/components/edit-rollout-button";
 
 export const dynamic = "force-dynamic";
 
@@ -114,9 +115,12 @@ export default async function ChannelsPage({
                         )}
                       </div>
                       <div className="flex items-center gap-3">
-                        <span className="text-xs text-foreground/50">
-                          {a.rolloutPercent}%
-                        </span>
+                        <EditRolloutButton
+                          appKey={appKey}
+                          channelId={ch.id}
+                          assignmentId={a.id}
+                          currentPercent={a.rolloutPercent}
+                        />
                         <span
                           className="text-xs text-foreground/40"
                           title={formatAbsolute(a.updatedAt)}

@@ -13,5 +13,11 @@ export const rollbackUpdateSchema = z.object({
   reason: nonEmpty.optional(),
 });
 
+export const updateRolloutSchema = z.object({
+  assignmentId: nonEmpty,
+  rolloutPercent: z.number().min(0).max(100),
+});
+
 export type PromoteUpdateInput = z.infer<typeof promoteUpdateSchema>;
 export type RollbackUpdateInput = z.infer<typeof rollbackUpdateSchema>;
+export type UpdateRolloutInput = z.infer<typeof updateRolloutSchema>;
