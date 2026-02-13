@@ -4,7 +4,7 @@ const docs = [
   {
     slug: "ota-publish-guide",
     title: "OTA Publish Guide",
-    description: "Bundle build부터 production promote까지 전체 배포 워크플로우",
+    description: "End-to-end workflow from bundle export to production deployment",
     icon: (
       <svg
         width="20"
@@ -25,7 +25,7 @@ const docs = [
   {
     slug: "staging-checklist",
     title: "Staging Verification Checklist",
-    description: "iOS/Android 크로스 플랫폼 스테이징 검증 절차",
+    description: "Cross-platform staging verification procedures for iOS and Android",
     icon: (
       <svg
         width="20"
@@ -45,7 +45,7 @@ const docs = [
   {
     slug: "production-operations",
     title: "Production Operations Checklist",
-    description: "AWS EC2 모니터링, 알람 설정, 롤백 런북",
+    description: "Monitoring, alarms, and rollback runbook for AWS EC2",
     icon: (
       <svg
         width="20"
@@ -70,7 +70,7 @@ export default function GuidePage() {
     <div className="p-8 max-w-3xl mx-auto">
       <h1 className="text-2xl font-bold mb-2">Docs</h1>
       <p className="text-sm text-foreground/50 mb-8">
-        Airship OTA 서버 운영에 필요한 가이드 문서
+        Guides for operating the Airship OTA server
       </p>
       <div className="space-y-3">
         {docs.map((doc) => (

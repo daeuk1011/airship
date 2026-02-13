@@ -1,105 +1,118 @@
 # Staging Verification Checklist
 
-## 1) 마이그레이션 적용
+Items to verify in the staging environment before deploying a new version.
+
+---
+
+## 1. Migration
 
 ```bash
 bun run db:migrate
 ```
 
-Expected:
-- `channel_assignments` 테이블에 `platform` 컬럼 존재
-- `api_tokens` 테이블 생성됨
+- Confirm `channel_assignments` table has a `platform` column
+- Confirm `api_tokens` table exists
 
-## 2) 로컬 테스트 실행
+---
+
+## 2. Automated Tests
 
 ```bash
 bun run test:integration
 bun run verify:platform
 ```
 
-Expected:
-- API 검증 테스트 통과
-- 플랫폼별 유니크 제약 조건 테스트 통과
+- API validation tests pass
+- Platform uniqueness constraint test passes
 
-## 3) 크로스 플랫폼 배포 시나리오
+---
 
-동일한 `appKey`, `runtimeVersion`, `channel`에 서로 다른 `platform`으로 배포합니다.
+## 3. Cross-Platform Deployment
 
-1. iOS 업데이트를 `staging`에 업로드
-2. Android 업데이트를 `staging`에 업로드
-3. iOS 헤더로 매니페스트 요청
-4. Android 헤더로 매니페스트 요청
+Deploy **iOS and Android separately** to the same `appKey` / `runtimeVersion` / `channel`.
+
+1. Upload an iOS update to `staging`
+2. Upload an Android update to `staging`
+3. Request the manifest with each platform header
 
 ```bash
-# iOS 매니페스트 요청
-curl -i -X POST "https://<staging-host>/api/apps/<appKey>/manifest" \
+# iOS
+curl -i -X POST "https://<host>/api/apps/<appKey>/manifest" \
   -H "expo-platform: ios" \
   -H "expo-runtime-version: 1.0.0" \
   -H "expo-channel-name: staging"
 
-# Android 매니페스트 요청
-curl -i -X POST "https://<staging-host>/api/apps/<appKey>/manifest" \
+# Android
+curl -i -X POST "https://<host>/api/apps/<appKey>/manifest" \
   -H "expo-platform: android" \
   -H "expo-runtime-version: 1.0.0" \
   -H "expo-channel-name: staging"
 ```
 
-Expected:
-- iOS 요청은 iOS 번들 반환
-- Android 요청은 Android 번들 반환
-- 한 플랫폼 배포가 다른 플랫폼 할당을 덮어쓰지 않음
+**Verify**:
+- iOS request &rarr; returns the iOS bundle
+- Android request &rarr; returns the Android bundle
+- Deploying one platform does not overwrite the other
 
-## 4) 업데이트 토글 검증
+---
 
-1. 대시보드에서 특정 업데이트의 **Disable** 버튼 클릭
-2. 해당 업데이트가 할당된 채널로 매니페스트 요청
-3. 비활성화된 업데이트가 응답에 포함되지 않는지 확인
-4. **Enable** 버튼으로 다시 활성화 후 정상 응답 확인
+## 4. Update Toggle
 
-## 5) 롤아웃 비율 검증
+1. Click **Disable Update** on the Update detail page
+2. Request the manifest for the assigned channel &rarr; confirm the disabled update is **not included**
+3. Click **Enable Update** to restore, then confirm a normal response
 
-1. Channels 페이지에서 특정 할당의 퍼센트를 클릭하여 50%로 변경
-2. 동일 조건으로 매니페스트를 여러 번 요청
-3. 약 50%의 요청에서 업데이트가 반환되는지 확인
-4. 100%로 복원
+---
 
-## 6) API 토큰 검증
+## 5. Rollout Percentage
 
-1. 대시보드 **Tokens** 페이지에서 토큰 생성
-2. 생성된 토큰으로 API 호출 테스트
+1. On the Channels page, click the percentage &rarr; change to `50` &rarr; Save
+2. Request the manifest multiple times under the same conditions
+3. Confirm that roughly half of the requests return the update
+4. Restore to `100`
+
+---
+
+## 6. API Tokens
+
+1. Create a token on the **Tokens** page (the plaintext is shown only once)
+2. Test authentication with the created token
 
 ```bash
-# API Token으로 인증
+# Valid token → 200
 curl -H "Authorization: Bearer airship_xxxx..." \
-  https://<staging-host>/api/apps
+  https://<host>/api/apps
+
+# Invalid token → 401
+curl -H "Authorization: Bearer invalid_token" \
+  https://<host>/api/apps
 ```
 
-Expected:
-- 유효한 토큰으로 200 응답
-- 잘못된 토큰으로 401 응답
-- Tokens 페이지에서 "Last used" 시간 갱신 확인
+3. Confirm the **Last used** timestamp updated on the Tokens page
 
-## 7) 앱 삭제 검증
+---
 
-> 테스트용 앱에서만 수행할 것
+## 7. App Deletion
 
-1. 테스트용 앱 생성 후 업데이트, 채널 할당 추가
-2. 앱 상세 페이지에서 **Delete App** 클릭
-3. 관련 데이터(업데이트, 채널, 할당, 에셋)가 모두 삭제됐는지 확인
+> **Only perform this on test apps.**
 
-## 8) DB Sanity Query
+1. Create a test app with updates and channel assignments
+2. Click **Delete App** on the app detail page
+3. Confirm all related data (updates, channels, assignments, assets, rollback history) has been removed
+
+---
+
+## 8. DB Sanity Check
 
 ```sql
--- 플랫폼별 할당 확인
+-- Verify platform-specific assignments are separated
 SELECT app_id, channel_id, runtime_version, platform, update_id
 FROM channel_assignments
 WHERE app_id = '<app-id>' AND runtime_version = '1.0.0'
 ORDER BY platform;
+-- Expected: one row for ios, one row for android
 
--- API 토큰 확인 (hash만 저장됨)
-SELECT id, name, created_at, last_used_at FROM api_tokens;
+-- Verify tokens (plaintext is never stored)
+SELECT id, name, created_at, last_used_at
+FROM api_tokens;
 ```
-
-Expected:
-- channel_assignments: 동일 (app, channel, rv)에 ios/android 각 1행
-- api_tokens: 토큰 이름과 시간 정보 확인 (평문 토큰은 저장되지 않음)

@@ -1,53 +1,46 @@
 # OTA Publish Guide
 
+End-to-end workflow from bundle export to production deployment.
+
+---
+
 ## Publish Flow
 
-```
-Bundle build → publish-update.sh → staging 자동 할당 → 대시보드에서 production promote
-```
+> **Bundle Export** &rarr; **publish-update.sh** &rarr; **Auto-assigned to staging** &rarr; **Promote to production on dashboard**
+
+---
 
 ## Prerequisites
 
-### Required Tools
+**Tools**: `curl`, `jq`, `shasum` (macOS) or `sha256sum` (Linux)
 
-- `curl`
-- `jq`
-- `shasum` (macOS) or `sha256sum` (Linux)
+**Authentication** — two methods are supported:
 
-### Authentication
+- **Admin Secret** (`Bearer <ADMIN_SECRET>`) — for local development and initial setup
+- **API Token** (`Bearer airship_xxx...`) — for CI/CD and automation **(recommended)**
 
-API 인증은 두 가지 방식을 지원합니다:
+Create API Tokens on the **Tokens** page in the dashboard.
 
-| 방식 | Header | 용도 |
-|------|--------|------|
-| Admin Secret | `Bearer <ADMIN_SECRET>` | 로컬 개발, 초기 설정 |
-| API Token | `Bearer airship_xxx...` | CI/CD, 자동화 스크립트 |
+**Environment Variables**:
 
-API Token은 대시보드의 **Tokens** 페이지에서 생성할 수 있습니다. CI/CD 환경에서는 Admin Secret 대신 API Token 사용을 권장합니다.
+- `AIRSHIP_ADMIN_SECRET` — Bearer token (Admin Secret or API Token)
+- `AIRSHIP_SERVER_URL` — Airship server URL (used when `--server` is not specified)
 
-### Environment Variables
-
-| Variable | Description | Required |
-|------|------|------|
-| `AIRSHIP_ADMIN_SECRET` | Bearer token (Admin Secret 또는 API Token) | Yes |
-| `AIRSHIP_SERVER_URL` | Airship server URL | When `--server` is not specified |
+---
 
 ## Manual Deploy (Local)
 
-### 1. Export Expo Bundle
+### Step 1. Export Expo Bundle
 
 ```bash
-# iOS
 npx expo export --platform ios --output-dir dist
-
-# Android
 npx expo export --platform android --output-dir dist
 ```
 
-### 2. Publish OTA Update
+### Step 2. Publish OTA Update
 
 ```bash
-export AIRSHIP_ADMIN_SECRET="your-admin-secret"
+export AIRSHIP_ADMIN_SECRET="your-token"
 
 ./scripts/publish-update.sh \
   --server https://ota.example.com \
@@ -57,29 +50,31 @@ export AIRSHIP_ADMIN_SECRET="your-admin-secret"
   --bundle ./dist/bundles/ios-xxxxx.js
 ```
 
-기본 채널은 `staging`입니다. `--channel` 옵션으로 다른 채널에 배포할 수 있습니다.
+> Default channel is `staging`. Use `--channel production` to target a different channel.
 
-### 3. Promote on Dashboard
+### Step 3. Promote on Dashboard
 
-1. Dashboard → App → Updates 목록에서 업데이트 클릭
-2. 현재 할당된 채널이 배지로 표시됨
-3. Promote 섹션에서 staging → production 선택 후 Promote 클릭
+1. Go to **App** &rarr; click the update in the Updates list
+2. The currently assigned channel is shown as a badge
+3. In the **Promote** section, select `staging → production` and click Promote
 
-## App Repo CI Integration
+---
 
-앱 레포의 GitHub Actions에서 번들 빌드 후 `publish-update.sh`를 직접 호출합니다.
+## CI Integration (GitHub Actions)
 
-### 1. Secrets Configuration
+Automatically publish OTA updates after building the bundle in your app repo.
 
-앱 레포의 Settings → Secrets and variables → Actions에 추가:
+### Secrets Setup
 
-- `AIRSHIP_ADMIN_SECRET` — API Token (대시보드 Tokens 페이지에서 생성)
+Add the following in your app repo under Settings &rarr; Secrets and variables &rarr; Actions:
+
+- `AIRSHIP_ADMIN_SECRET` — API Token
 - `AIRSHIP_SERVER_URL` — Airship server URL
 
-### 2. Workflow Example
+### Workflow Example
 
 ```yaml
-# .github/workflows/ota-publish.yml (앱 레포에 추가)
+# .github/workflows/ota-publish.yml (add to app repo)
 name: OTA Publish
 on:
   push:
@@ -124,31 +119,30 @@ jobs:
             --bundle dist/bundles/${{ matrix.platform }}.js
 ```
 
-iOS/Android가 matrix로 병렬 실행됩니다. 기본 채널은 `staging` — 대시보드에서 production으로 promote합니다.
+> iOS and Android run in parallel via the `matrix` strategy.
+> Default channel is `staging` — promote to production from the dashboard.
 
-## Script Options
+---
 
-```bash
-./scripts/publish-update.sh --help
-```
+## Script Options Reference
 
 | Option | Description | Default |
-|------|------|--------|
+|---|---|---|
 | `--server URL` | Airship server URL | `$AIRSHIP_SERVER_URL` |
-| `--app-key KEY` | App key | (required) |
-| `--runtime-version VER` | Runtime version | (required) |
-| `--platform PLATFORM` | ios or android | (required) |
-| `--bundle PATH` | Bundle file path | (required) |
-| `--channel NAME` | Target channel | staging |
+| `--app-key KEY` | App key | *required* |
+| `--runtime-version VER` | Runtime version | *required* |
+| `--platform PLATFORM` | `ios` or `android` | *required* |
+| `--bundle PATH` | Bundle file path | *required* |
+| `--channel NAME` | Target channel | `staging` |
 
-## Dashboard Features
+---
 
-업데이트 배포 후 대시보드에서 활용할 수 있는 기능:
+## Dashboard Features After Deployment
 
-| 기능 | 위치 | 설명 |
-|------|------|------|
-| Flat/Grouped 뷰 | App 상세 | iOS+Android 쌍을 그룹으로 묶어 확인 |
-| 번들 사이즈 | App 상세, Update 상세 | 각 업데이트의 번들 크기 표시 |
-| Runtime Versions | App 상세 | RV별 업데이트 수, 채널 할당 여부 |
-| Enable/Disable | Update 상세 | 특정 업데이트를 비활성화하여 배포 중단 |
-| Rollout % 조절 | Channels 페이지 | 점진적 롤아웃 (0-100%) |
+| Feature | Location | Description |
+|---|---|---|
+| **Grouped View** | App detail | View iOS + Android pairs grouped together |
+| **Bundle Size** | App detail / Update detail | Bundle size for each update |
+| **Runtime Versions** | App detail | Update count and channel assignment status per RV |
+| **Enable / Disable** | Update detail | Disable an update to immediately stop delivery |
+| **Rollout %** | Channels page | Gradual rollout from 0% to 100% |
