@@ -2,6 +2,25 @@ import Link from "next/link";
 
 const docs = [
   {
+    slug: "quick-start",
+    title: "Quick Start (10 min)",
+    description: "Fastest path from first login to first OTA delivery",
+    icon: (
+      <svg
+        width="20"
+        height="20"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+      </svg>
+    ),
+  },
+  {
     slug: "ota-publish-guide",
     title: "OTA Publish Guide",
     description: "End-to-end workflow from bundle export to production deployment",
