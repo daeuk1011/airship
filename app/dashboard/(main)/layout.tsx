@@ -22,7 +22,7 @@ export default function MainDashboardLayout({
         <nav className="p-2 flex flex-col gap-0.5 flex-1">
           <NavLink href="/dashboard">Overview</NavLink>
           <NavLink href="/dashboard/apps">Apps</NavLink>
-          <NavLink href="/dashboard/guide">Guide</NavLink>
+          <NavLink href="/dashboard/guide">Docs</NavLink>
         </nav>
         <div className="p-2 border-t border-foreground/10">
           <LogoutButton />
