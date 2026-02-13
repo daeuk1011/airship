@@ -10,14 +10,18 @@ export function PromoteButton({
   appKey,
   updateId,
   channels,
+  assignedChannels = [],
 }: {
   appKey: string;
   updateId: string;
   channels: string[];
+  assignedChannels?: string[];
 }) {
   const router = useRouter();
   const [fromChannel, setFromChannel] = useState(
-    channels.includes("staging") ? "staging" : channels[0] ?? ""
+    assignedChannels.includes("staging")
+      ? "staging"
+      : assignedChannels[0] ?? channels[0] ?? ""
   );
   const [toChannel, setToChannel] = useState(
     channels.includes("production") ? "production" : channels[1] ?? ""
@@ -61,9 +65,16 @@ export function PromoteButton({
     }
   }
 
+  const noAssignment = assignedChannels.length === 0;
+
   return (
     <div className="space-y-2">
       <p className="text-sm font-medium">Promote</p>
+      {noAssignment && (
+        <p className="text-xs text-foreground/50">
+          This update is not assigned to any channel yet.
+        </p>
+      )}
       <div className="flex items-center gap-2 flex-wrap">
         <Select
           value={fromChannel}
@@ -99,7 +110,7 @@ export function PromoteButton({
         <Button
           size="sm"
           onClick={handlePromote}
-          disabled={loading}
+          disabled={loading || noAssignment}
         >
           {loading ? "..." : "Promote"}
         </Button>

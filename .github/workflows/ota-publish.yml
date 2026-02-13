@@ -1,0 +1,64 @@
+name: OTA Publish
+
+on:
+  workflow_dispatch:
+    inputs:
+      appKey:
+        description: "App key"
+        required: true
+        type: string
+      runtimeVersion:
+        description: "Runtime version (e.g. 1.0.0)"
+        required: true
+        type: string
+      platform:
+        description: "Platform"
+        required: true
+        type: choice
+        options:
+          - ios
+          - android
+      bundleFilePath:
+        description: "Path to bundle file (relative to repo root)"
+        required: true
+        type: string
+      channel:
+        description: "Target channel"
+        required: false
+        default: "staging"
+        type: string
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verify bundle file exists
+        env:
+          BUNDLE_FILE: ${{ inputs.bundleFilePath }}
+        run: |
+          if [ ! -f "$BUNDLE_FILE" ]; then
+            echo "Error: Bundle file not found: $BUNDLE_FILE"
+            exit 1
+          fi
+
+      - name: Publish OTA update
+        env:
+          AIRSHIP_ADMIN_SECRET: ${{ secrets.AIRSHIP_ADMIN_SECRET }}
+          AIRSHIP_SERVER_URL: ${{ secrets.AIRSHIP_SERVER_URL }}
+          INPUT_APP_KEY: ${{ inputs.appKey }}
+          INPUT_RUNTIME_VERSION: ${{ inputs.runtimeVersion }}
+          INPUT_PLATFORM: ${{ inputs.platform }}
+          INPUT_BUNDLE: ${{ inputs.bundleFilePath }}
+          INPUT_CHANNEL: ${{ inputs.channel }}
+        run: |
+          ./scripts/publish-update.sh \
+            --app-key "$INPUT_APP_KEY" \
+            --runtime-version "$INPUT_RUNTIME_VERSION" \
+            --platform "$INPUT_PLATFORM" \
+            --bundle "$INPUT_BUNDLE" \
+            --channel "$INPUT_CHANNEL"

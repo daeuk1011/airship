@@ -87,14 +87,23 @@ export default async function UpdateDetailPage({
               label="Created"
               value={new Date(update.createdAt).toLocaleString()}
             />
-            <Row
-              label="Channels"
-              value={
-                assignedChannels.length > 0
-                  ? assignedChannels.join(", ")
-                  : "None"
-              }
-            />
+            <div className="flex justify-between">
+              <dt className="text-foreground/50">Channels</dt>
+              <dd className="flex gap-1.5 flex-wrap justify-end">
+                {assignedChannels.length > 0 ? (
+                  assignedChannels.map((ch) => (
+                    <span
+                      key={ch}
+                      className="inline-flex items-center rounded-full bg-foreground/10 px-2 py-0.5 text-xs font-medium"
+                    >
+                      {ch}
+                    </span>
+                  ))
+                ) : (
+                  <span className="text-foreground/40 text-xs">None</span>
+                )}
+              </dd>
+            </div>
           </dl>
         </Card>
 
@@ -112,6 +121,7 @@ export default async function UpdateDetailPage({
               appKey={appKey}
               updateId={update.id}
               channels={channelList.map((c) => c.name)}
+              assignedChannels={assignedChannels}
             />
           </div>
         </Card>
