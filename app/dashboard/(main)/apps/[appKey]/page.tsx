@@ -4,7 +4,8 @@ import { eq, desc } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { BackLink } from "@/shared/ui/back-link";
-import { CardList } from "@/shared/ui/card";
+import { Card, CardList } from "@/shared/ui/card";
+import { UploadUpdateForm } from "@/features/updates/components/upload-update-form";
 
 export const dynamic = "force-dynamic";
 
@@ -64,6 +65,10 @@ export default async function AppDetailPage({
           Channels ({channelList.length})
         </Link>
       </div>
+
+      <Card className="mb-6">
+        <UploadUpdateForm appKey={appKey} />
+      </Card>
 
       <h2 className="text-lg font-semibold mb-3">Updates</h2>
 
