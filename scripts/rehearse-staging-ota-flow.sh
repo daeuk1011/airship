@@ -35,6 +35,18 @@ trap cleanup EXIT
 echo 'console.log("ota rehearsal bundle");' > "${LAUNCH_JS}"
 printf 'rehearsal-asset' > "${ASSET_FILE}"
 
+sha256_file() {
+  local file_path="$1"
+  if command -v sha256sum >/dev/null 2>&1; then
+    sha256sum "${file_path}" | awk '{print $1}'
+  else
+    shasum -a 256 "${file_path}" | awk '{print $1}'
+  fi
+}
+
+BUNDLE_HASH="$(sha256_file "${LAUNCH_JS}")"
+ASSET_HASH="$(sha256_file "${ASSET_FILE}")"
+
 request_json() {
   local method="$1"
   local url="$2"
@@ -93,7 +105,7 @@ for platform in ios android; do
   curl -sS -o /dev/null -X PUT -H "content-type: application/octet-stream" --data-binary @"${ASSET_FILE}" "${asset_url}"
 
   echo "[rehearsal] ${platform}: commit update"
-  status="$(request_json "POST" "${BASE_URL}/api/apps/${APP_KEY}/uploads/commit" "{\"updateGroupId\":\"${update_group_id}\",\"runtimeVersion\":\"${RUNTIME_VERSION}\",\"platform\":\"${platform}\",\"channelName\":\"${CHANNEL_NAME}\",\"bundle\":{\"s3Key\":\"${bundle_s3_key}\",\"hash\":\"hash-${platform}\",\"size\":36},\"assets\":[{\"s3Key\":\"${asset_s3_key}\",\"hash\":\"asset-hash-${platform}\",\"key\":\"asset-${platform}\",\"fileExtension\":\"bin\",\"contentType\":\"application/octet-stream\",\"size\":15}]}")"
+  status="$(request_json "POST" "${BASE_URL}/api/apps/${APP_KEY}/uploads/commit" "{\"updateGroupId\":\"${update_group_id}\",\"runtimeVersion\":\"${RUNTIME_VERSION}\",\"platform\":\"${platform}\",\"channelName\":\"${CHANNEL_NAME}\",\"bundle\":{\"s3Key\":\"${bundle_s3_key}\",\"hash\":\"${BUNDLE_HASH}\",\"size\":36},\"assets\":[{\"s3Key\":\"${asset_s3_key}\",\"hash\":\"${ASSET_HASH}\",\"key\":\"asset-${platform}\",\"fileExtension\":\"bin\",\"contentType\":\"application/octet-stream\",\"size\":15}]}")"
   assert_status "${status}" "201" "${platform} commit"
 
   echo "[rehearsal] ${platform}: manifest fetch"

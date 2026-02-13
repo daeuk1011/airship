@@ -1,28 +1,51 @@
 import { z } from "zod";
 
 const nonEmpty = z.string().trim().min(1);
+const noPathTraversal = (value: string) =>
+  !value.includes("..") &&
+  !value.includes("\\") &&
+  !value.startsWith("/") &&
+  !value.startsWith("./") &&
+  !value.startsWith("../");
+
+const safeFilename = nonEmpty.refine(
+  (value) => noPathTraversal(value) && !value.includes("/"),
+  {
+    message: "Filename must not contain path separators",
+  }
+);
+
+const s3Key = nonEmpty.refine(noPathTraversal, {
+  message: "Invalid S3 key",
+});
+
+const sha256Hex = z
+  .string()
+  .trim()
+  .regex(/^[a-fA-F0-9]{64}$/, "Hash must be a SHA-256 hex string")
+  .transform((value) => value.toLowerCase());
 
 export const presignAssetSchema = z.object({
-  filename: nonEmpty,
+  filename: safeFilename,
   contentType: nonEmpty.optional(),
 });
 
 export const presignUploadSchema = z.object({
   runtimeVersion: nonEmpty,
   platform: nonEmpty,
-  bundleFilename: nonEmpty,
+  bundleFilename: safeFilename,
   assets: z.array(presignAssetSchema).default([]),
 });
 
 export const commitBundleSchema = z.object({
-  s3Key: nonEmpty,
-  hash: nonEmpty,
+  s3Key,
+  hash: sha256Hex,
   size: z.number().finite().min(0).optional(),
 });
 
 export const commitAssetSchema = z.object({
-  s3Key: nonEmpty,
-  hash: nonEmpty,
+  s3Key,
+  hash: sha256Hex,
   key: nonEmpty,
   fileExtension: nonEmpty,
   contentType: nonEmpty.optional(),
@@ -30,7 +53,7 @@ export const commitAssetSchema = z.object({
 });
 
 export const commitUploadSchema = z.object({
-  updateGroupId: nonEmpty,
+  updateGroupId: z.string().uuid(),
   runtimeVersion: nonEmpty,
   platform: nonEmpty,
   channelName: nonEmpty.optional(),

@@ -6,6 +6,11 @@ import { verifyAuth } from "@/shared/libs/auth";
 import { getPresignedUploadUrl } from "@/shared/libs/s3";
 import { errorResponse, invalidRequestFromZod } from "@/shared/libs/http/error";
 import { presignUploadSchema } from "@/shared/validation/uploads";
+import {
+  buildAssetS3Key,
+  buildBundleS3Key,
+  buildUploadPrefix,
+} from "@/shared/utils/upload-keys";
 import { v4 as uuidv4 } from "uuid";
 
 export async function POST(
@@ -32,9 +37,9 @@ export async function POST(
   const { runtimeVersion, platform, bundleFilename, assets: assetList } = parsed.data;
 
   const updateGroupId = uuidv4();
-  const prefix = `ota/${appKey}/${runtimeVersion}/${updateGroupId}`;
+  const prefix = buildUploadPrefix(appKey, runtimeVersion, updateGroupId);
 
-  const bundleS3Key = `${prefix}/bundles/${platform}/${bundleFilename}`;
+  const bundleS3Key = buildBundleS3Key(prefix, platform, bundleFilename);
   const bundlePresignedUrl = await getPresignedUploadUrl(
     bundleS3Key,
     "application/javascript"
@@ -42,7 +47,7 @@ export async function POST(
 
   const presignedAssets = await Promise.all(
     assetList.map(async (asset) => {
-      const s3Key = `${prefix}/assets/${asset.filename}`;
+      const s3Key = buildAssetS3Key(prefix, asset.filename);
       const presignedUrl = await getPresignedUploadUrl(
         s3Key,
         asset.contentType

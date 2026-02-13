@@ -6,7 +6,12 @@ import { errorResponse } from "@/shared/libs/http/error";
 import { getPresignedDownloadUrl } from "@/shared/libs/s3";
 import crypto from "crypto";
 
-function hexToBase64Url(hex: string): string {
+const SHA256_HEX_PATTERN = /^[a-fA-F0-9]{64}$/;
+
+function hexToBase64Url(hex: string): string | null {
+  if (!SHA256_HEX_PATTERN.test(hex)) {
+    return null;
+  }
   const buf = Buffer.from(hex, "hex");
   return buf.toString("base64url");
 }
@@ -166,29 +171,46 @@ async function handleManifest(
 
   // Generate presigned URLs
   const bundleUrl = await getPresignedDownloadUrl(update.bundleS3Key);
+  const launchAssetHash = hexToBase64Url(update.bundleHash);
+  if (!launchAssetHash) {
+    return noUpdateAvailableResponse();
+  }
 
   const manifestAssets = await Promise.all(
-    updateAssets.map(async (asset) => ({
-      hash: hexToBase64Url(asset.hash),
-      key: asset.key,
-      fileExtension: asset.fileExtension,
-      contentType: asset.contentType ?? "application/octet-stream",
-      url: await getPresignedDownloadUrl(asset.s3Key),
-    }))
+    updateAssets.map(async (asset) => {
+      const hash = hexToBase64Url(asset.hash);
+      if (!hash) {
+        return null;
+      }
+
+      return {
+        hash,
+        key: asset.key,
+        fileExtension: asset.fileExtension,
+        contentType: asset.contentType ?? "application/octet-stream",
+        url: await getPresignedDownloadUrl(asset.s3Key),
+      };
+    })
   );
+  const normalizedManifestAssets = manifestAssets.filter(
+    (asset): asset is NonNullable<typeof asset> => asset !== null
+  );
+  if (normalizedManifestAssets.length !== updateAssets.length) {
+    return noUpdateAvailableResponse();
+  }
 
   const manifest = {
     id: update.id,
     createdAt: new Date(update.createdAt).toISOString(),
     runtimeVersion: update.runtimeVersion,
     launchAsset: {
-      hash: hexToBase64Url(update.bundleHash),
+      hash: launchAssetHash,
       key: update.bundleHash,
       fileExtension: ".bundle",
       contentType: "application/javascript",
       url: bundleUrl,
     },
-    assets: manifestAssets,
+    assets: normalizedManifestAssets,
     metadata: {
       branchName: channelName,
     },

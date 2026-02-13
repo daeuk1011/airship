@@ -6,6 +6,11 @@ import { verifyAuth } from "@/shared/libs/auth";
 import { errorResponse, invalidRequestFromZod } from "@/shared/libs/http/error";
 import { headObject } from "@/shared/libs/s3";
 import { commitUploadSchema } from "@/shared/validation/uploads";
+import {
+  buildUploadPrefix,
+  isAssetS3KeyInScope,
+  isBundleS3KeyInScope,
+} from "@/shared/utils/upload-keys";
 import { v4 as uuidv4 } from "uuid";
 
 export async function POST(
@@ -37,6 +42,34 @@ export async function POST(
     bundle,
     assets: assetList,
   } = parsed.data;
+
+  const expectedPrefix = buildUploadPrefix(appKey, runtimeVersion, updateGroupId);
+  if (!isBundleS3KeyInScope(bundle.s3Key, expectedPrefix, platform)) {
+    return errorResponse(
+      400,
+      "BAD_REQUEST",
+      "Bundle key is outside the allowed upload scope"
+    );
+  }
+
+  const seenAssetKeys = new Set<string>();
+  for (const asset of assetList ?? []) {
+    if (!isAssetS3KeyInScope(asset.s3Key, expectedPrefix)) {
+      return errorResponse(
+        400,
+        "BAD_REQUEST",
+        `Asset key is outside the allowed upload scope: ${asset.s3Key}`
+      );
+    }
+    if (seenAssetKeys.has(asset.s3Key)) {
+      return errorResponse(
+        400,
+        "BAD_REQUEST",
+        `Duplicated asset key in request: ${asset.s3Key}`
+      );
+    }
+    seenAssetKeys.add(asset.s3Key);
+  }
 
   // Verify bundle exists on S3
   const bundleExists = await headObject(bundle.s3Key);
