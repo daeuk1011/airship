@@ -18,17 +18,24 @@ function buildMultipartResponse(manifest: object): NextResponse {
   const manifestJson = JSON.stringify(manifest);
   const extensionsJson = JSON.stringify({ assetRequestHeaders: {} });
 
-  const body = [
-    `--${boundary}`,
-    "Content-Type: application/json; charset=utf-8",
-    "",
-    manifestJson,
-    `--${boundary}`,
-    "Content-Type: application/json",
-    "",
-    extensionsJson,
-    `--${boundary}--`,
-  ].join("\r\n");
+  const parts = [
+    [
+      `--${boundary}`,
+      `Content-Disposition: form-data; name="manifest"`,
+      "Content-Type: application/json; charset=utf-8",
+      "",
+      manifestJson,
+    ].join("\r\n"),
+    [
+      `--${boundary}`,
+      `Content-Disposition: form-data; name="extensions"`,
+      "Content-Type: application/json",
+      "",
+      extensionsJson,
+    ].join("\r\n"),
+  ];
+
+  const body = parts.join("\r\n") + `\r\n--${boundary}--\r\n`;
 
   return new NextResponse(body, {
     status: 200,
