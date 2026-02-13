@@ -7,6 +7,8 @@ import Link from "next/link";
 import { BackLink } from "@/shared/ui/back-link";
 import { Card, CardList } from "@/shared/ui/card";
 import { UploadUpdateForm } from "@/features/updates/components/upload-update-form";
+import { formatBytes } from "@/shared/utils/format";
+import { DeleteAppButton } from "@/features/apps/components/delete-app-button";
 
 export const dynamic = "force-dynamic";
 
@@ -15,10 +17,11 @@ export default async function AppDetailPage({
   searchParams,
 }: {
   params: Promise<{ appKey: string }>;
-  searchParams: Promise<{ platform?: string }>;
+  searchParams: Promise<{ platform?: string; view?: string }>;
 }) {
   const { appKey } = await params;
-  const { platform: platformFilter } = await searchParams;
+  const { platform: platformFilter, view } = await searchParams;
+  const isGrouped = view === "grouped";
 
   const app = db.select().from(apps).where(eq(apps.appKey, appKey)).get();
 
@@ -63,12 +66,40 @@ export default async function AppDetailPage({
     .where(eq(rollbackHistory.appId, app.id))
     .get()!.count;
 
+  // Aggregate runtime versions from updateList
+  const rvMap = new Map<string, { platform: string; count: number; hasChannel: boolean }>();
+  for (const u of updateList) {
+    const key = `${u.runtimeVersion}__${u.platform}`;
+    const existing = rvMap.get(key);
+    if (existing) {
+      existing.count++;
+      if (!existing.hasChannel && assignmentMap.has(u.id)) existing.hasChannel = true;
+    } else {
+      rvMap.set(key, {
+        platform: u.platform,
+        count: 1,
+        hasChannel: assignmentMap.has(u.id),
+      });
+    }
+  }
+  const runtimeVersions = [...rvMap.entries()]
+    .map(([key, data]) => ({
+      version: key.split("__")[0],
+      ...data,
+    }))
+    .sort((a, b) => b.version.localeCompare(a.version, undefined, { numeric: true }));
+
   return (
     <div className="p-8">
       <div className="mb-6">
         <BackLink href="/dashboard/apps">Apps</BackLink>
-        <h1 className="text-2xl font-bold mt-2">{app.name}</h1>
-        <p className="text-sm text-foreground/50">{app.appKey}</p>
+        <div className="flex items-center justify-between mt-2">
+          <div>
+            <h1 className="text-2xl font-bold">{app.name}</h1>
+            <p className="text-sm text-foreground/50">{app.appKey}</p>
+          </div>
+          <DeleteAppButton appKey={appKey} appName={app.name} />
+        </div>
       </div>
 
       <div className="flex gap-2 mb-6">
@@ -86,34 +117,85 @@ export default async function AppDetailPage({
         </Link>
       </div>
 
+      {runtimeVersions.length > 0 && (
+        <div className="mb-6">
+          <h2 className="text-sm font-semibold text-foreground/50 uppercase tracking-wider mb-2">
+            Runtime Versions
+          </h2>
+          <div className="flex flex-wrap gap-2">
+            {runtimeVersions.map((rv) => (
+              <div
+                key={`${rv.version}-${rv.platform}`}
+                className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-foreground/[0.03] text-sm"
+              >
+                {rv.hasChannel && (
+                  <span className="inline-block w-1.5 h-1.5 rounded-full bg-green-500" />
+                )}
+                <span className="font-mono text-xs">{rv.version}</span>
+                <span className="text-foreground/40 text-xs">
+                  {rv.platform === "ios" ? "iOS" : "Android"}
+                </span>
+                <span className="text-foreground/30 text-xs">
+                  {rv.count} update{rv.count !== 1 ? "s" : ""}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       <Card className="mb-6">
         <UploadUpdateForm appKey={appKey} />
       </Card>
 
       <div className="flex items-center justify-between mb-3">
         <h2 className="text-lg font-semibold">Updates</h2>
-        <div className="flex gap-1">
-          {["all", "ios", "android"].map((p) => {
-            const isActive =
-              p === "all" ? !platformFilter : platformFilter === p;
-            const href =
-              p === "all"
-                ? `/dashboard/apps/${appKey}`
-                : `/dashboard/apps/${appKey}?platform=${p}`;
-            return (
-              <Link
-                key={p}
-                href={href}
-                className={`px-2.5 py-1 text-xs rounded-md transition-colors ${
-                  isActive
-                    ? "bg-foreground text-background font-medium"
-                    : "text-foreground/50 hover:bg-foreground/5"
-                }`}
-              >
-                {p === "all" ? "All" : p === "ios" ? "iOS" : "Android"}
-              </Link>
-            );
-          })}
+        <div className="flex items-center gap-3">
+          <div className="flex gap-1">
+            {["flat", "grouped"].map((v) => {
+              const isActive = v === "flat" ? !isGrouped : isGrouped;
+              const sp = new URLSearchParams();
+              if (platformFilter) sp.set("platform", platformFilter);
+              if (v === "grouped") sp.set("view", "grouped");
+              const qs = sp.toString();
+              return (
+                <Link
+                  key={v}
+                  href={`/dashboard/apps/${appKey}${qs ? `?${qs}` : ""}`}
+                  className={`px-2.5 py-1 text-xs rounded-md transition-colors ${
+                    isActive
+                      ? "bg-foreground text-background font-medium"
+                      : "text-foreground/50 hover:bg-foreground/5"
+                  }`}
+                >
+                  {v === "flat" ? "Flat" : "Grouped"}
+                </Link>
+              );
+            })}
+          </div>
+          <div className="flex gap-1">
+            {["all", "ios", "android"].map((p) => {
+              const isActive =
+                p === "all" ? !platformFilter : platformFilter === p;
+              const sp = new URLSearchParams();
+              if (p !== "all") sp.set("platform", p);
+              if (isGrouped) sp.set("view", "grouped");
+              const qs = sp.toString();
+              return (
+                <Link
+                  key={p}
+                  href={`/dashboard/apps/${appKey}${qs ? `?${qs}` : ""}`}
+                  className={`px-2.5 py-1 text-xs rounded-md transition-colors ${
+                    isActive
+                      ? "bg-foreground text-background font-medium"
+                      : "text-foreground/50 hover:bg-foreground/5"
+                  }`}
+                >
+                  {p === "all" ? "All" : p === "ios" ? "iOS" : "Android"}
+                </Link>
+              );
+            })}
+          </div>
         </div>
       </div>
 
@@ -139,34 +221,134 @@ export default async function AppDetailPage({
             Upload a bundle using the form above
           </p>
         </div>
+      ) : isGrouped ? (
+        <GroupedUpdates
+          updates={filteredUpdates}
+          appKey={appKey}
+          assignmentMap={assignmentMap}
+        />
       ) : (
         <CardList>
           {filteredUpdates.map((update) => (
-            <Link
+            <UpdateRow
               key={update.id}
-              href={`/dashboard/apps/${appKey}/updates/${update.id}`}
-              className="flex items-center justify-between p-4 hover:bg-foreground/[0.03] transition-colors"
+              update={update}
+              appKey={appKey}
+              channels={assignmentMap.get(update.id) ?? []}
+            />
+          ))}
+        </CardList>
+      )}
+    </div>
+  );
+}
+
+function UpdateRow({
+  update,
+  appKey,
+  channels,
+}: {
+  update: { id: string; platform: string; runtimeVersion: string; bundleHash: string; bundleSize: number | null; enabled: number; createdAt: number };
+  appKey: string;
+  channels: string[];
+}) {
+  return (
+    <Link
+      href={`/dashboard/apps/${appKey}/updates/${update.id}`}
+      className="flex items-center justify-between p-4 hover:bg-foreground/[0.03] transition-colors"
+    >
+      <div className="flex items-center gap-3">
+        <span
+          className={`inline-block w-2 h-2 rounded-full ${
+            update.enabled ? "bg-green-500" : "bg-red-500"
+          }`}
+        />
+        <div>
+          <p className="text-sm font-mono">
+            {update.id.slice(0, 8)}...
+          </p>
+          <p className="text-xs text-foreground/50">
+            {update.platform} &middot; rv {update.runtimeVersion}
+            <span className="text-foreground/40 font-mono ml-1">
+              {update.bundleHash.slice(0, 12)}
+            </span>
+            <span className="text-foreground/40 ml-1">
+              &middot; {formatBytes(update.bundleSize)}
+            </span>
+          </p>
+        </div>
+      </div>
+      <div className="text-right">
+        <div className="flex gap-1">
+          {channels.map((ch) => (
+            <span
+              key={ch}
+              className="text-xs px-1.5 py-0.5 rounded bg-foreground/10"
             >
-              <div className="flex items-center gap-3">
-                <span
-                  className={`inline-block w-2 h-2 rounded-full ${
-                    update.enabled ? "bg-green-500" : "bg-red-500"
-                  }`}
-                />
-                <div>
-                  <p className="text-sm font-mono">
-                    {update.id.slice(0, 8)}...
-                  </p>
-                  <p className="text-xs text-foreground/50">
-                    {update.platform} &middot; rv {update.runtimeVersion}
-                    <span className="text-foreground/40 font-mono ml-1">
-                      {update.bundleHash.slice(0, 12)}
-                    </span>
-                  </p>
+              {ch}
+            </span>
+          ))}
+        </div>
+        <p
+          className="text-xs text-foreground/40 mt-1"
+          title={formatAbsolute(update.createdAt)}
+        >
+          {timeAgo(update.createdAt)}
+        </p>
+      </div>
+    </Link>
+  );
+}
+
+function GroupedUpdates({
+  updates: updatesList,
+  appKey,
+  assignmentMap,
+}: {
+  updates: { id: string; updateGroupId: string; platform: string; runtimeVersion: string; bundleHash: string; bundleSize: number | null; enabled: number; createdAt: number }[];
+  appKey: string;
+  assignmentMap: Map<string, string[]>;
+}) {
+  const groups = new Map<string, typeof updatesList>();
+  for (const u of updatesList) {
+    const list = groups.get(u.updateGroupId) ?? [];
+    list.push(u);
+    groups.set(u.updateGroupId, list);
+  }
+
+  return (
+    <div className="space-y-3">
+      {[...groups.entries()].map(([groupId, items]) => (
+        <Card key={groupId}>
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-xs font-mono text-foreground/50">
+              Group {groupId.slice(0, 8)}...
+            </p>
+            <p className="text-xs text-foreground/40">
+              rv {items[0].runtimeVersion}
+            </p>
+          </div>
+          <div className="space-y-1">
+            {items.map((update) => (
+              <Link
+                key={update.id}
+                href={`/dashboard/apps/${appKey}/updates/${update.id}`}
+                className="flex items-center justify-between px-3 py-2 rounded hover:bg-foreground/[0.03] transition-colors"
+              >
+                <div className="flex items-center gap-2">
+                  <span
+                    className={`inline-block w-1.5 h-1.5 rounded-full ${
+                      update.enabled ? "bg-green-500" : "bg-red-500"
+                    }`}
+                  />
+                  <span className="text-xs">
+                    {update.platform === "ios" ? "iOS" : "Android"}
+                  </span>
+                  <span className="text-xs text-foreground/40">
+                    {formatBytes(update.bundleSize)}
+                  </span>
                 </div>
-              </div>
-              <div className="text-right">
-                <div className="flex gap-1">
+                <div className="flex items-center gap-2">
                   {(assignmentMap.get(update.id) ?? []).map((ch) => (
                     <span
                       key={ch}
@@ -175,18 +357,18 @@ export default async function AppDetailPage({
                       {ch}
                     </span>
                   ))}
+                  <span
+                    className="text-xs text-foreground/40"
+                    title={formatAbsolute(update.createdAt)}
+                  >
+                    {timeAgo(update.createdAt)}
+                  </span>
                 </div>
-                <p
-                  className="text-xs text-foreground/40 mt-1"
-                  title={formatAbsolute(update.createdAt)}
-                >
-                  {timeAgo(update.createdAt)}
-                </p>
-              </div>
-            </Link>
-          ))}
-        </CardList>
-      )}
+              </Link>
+            ))}
+          </div>
+        </Card>
+      ))}
     </div>
   );
 }
