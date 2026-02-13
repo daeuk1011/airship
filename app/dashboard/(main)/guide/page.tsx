@@ -142,12 +142,17 @@ export default function GuidePage() {
                   <tr className="border-b border-foreground/5">
                     <td className="py-1.5 font-mono">platform</td>
                     <td className="py-1.5">플랫폼</td>
-                    <td className="py-1.5 font-mono">ios / android</td>
+                    <td className="py-1.5 font-mono">both / ios / android</td>
                   </tr>
                   <tr className="border-b border-foreground/5">
-                    <td className="py-1.5 font-mono">bundleFilePath</td>
-                    <td className="py-1.5">번들 파일 경로</td>
+                    <td className="py-1.5 font-mono">iosBundlePath</td>
+                    <td className="py-1.5">iOS 번들 파일 경로</td>
                     <td className="py-1.5 font-mono">dist/bundles/ios.js</td>
+                  </tr>
+                  <tr className="border-b border-foreground/5">
+                    <td className="py-1.5 font-mono">androidBundlePath</td>
+                    <td className="py-1.5">Android 번들 파일 경로</td>
+                    <td className="py-1.5 font-mono">dist/bundles/android.js</td>
                   </tr>
                   <tr>
                     <td className="py-1.5 font-mono">channel</td>
