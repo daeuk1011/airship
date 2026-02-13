@@ -29,6 +29,7 @@ bun run verify:platform
 
 Staging cross-platform OTA verification checklist:
 - `docs/staging-cross-platform-checklist.md`
+- `docs/production-operations-checklist.md`
 
 Staging OTA full-flow rehearsal:
 
