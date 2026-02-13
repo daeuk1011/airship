@@ -16,12 +16,19 @@ on:
         required: true
         type: choice
         options:
+          - both
           - ios
           - android
-      bundleFilePath:
-        description: "Path to bundle file (relative to repo root)"
-        required: true
+      iosBundlePath:
+        description: "iOS bundle file path"
+        required: false
         type: string
+        default: "dist/bundles/ios.js"
+      androidBundlePath:
+        description: "Android bundle file path"
+        required: false
+        type: string
+        default: "dist/bundles/android.js"
       channel:
         description: "Target channel"
         required: false
@@ -29,9 +36,33 @@ on:
         type: string
 
 jobs:
+  resolve-platforms:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - name: Set platform matrix
+        id: set-matrix
+        env:
+          INPUT_PLATFORM: ${{ inputs.platform }}
+          INPUT_IOS_BUNDLE: ${{ inputs.iosBundlePath }}
+          INPUT_ANDROID_BUNDLE: ${{ inputs.androidBundlePath }}
+        run: |
+          if [ "$INPUT_PLATFORM" = "both" ]; then
+            echo "matrix={\"include\":[{\"platform\":\"ios\",\"bundle\":\"$INPUT_IOS_BUNDLE\"},{\"platform\":\"android\",\"bundle\":\"$INPUT_ANDROID_BUNDLE\"}]}" >> "$GITHUB_OUTPUT"
+          elif [ "$INPUT_PLATFORM" = "ios" ]; then
+            echo "matrix={\"include\":[{\"platform\":\"ios\",\"bundle\":\"$INPUT_IOS_BUNDLE\"}]}" >> "$GITHUB_OUTPUT"
+          else
+            echo "matrix={\"include\":[{\"platform\":\"android\",\"bundle\":\"$INPUT_ANDROID_BUNDLE\"}]}" >> "$GITHUB_OUTPUT"
+          fi
+
   publish:
+    needs: resolve-platforms
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    strategy:
+      matrix: ${{ fromJson(needs.resolve-platforms.outputs.matrix) }}
+      fail-fast: false
 
     steps:
       - name: Checkout
@@ -39,7 +70,7 @@ jobs:
 
       - name: Verify bundle file exists
         env:
-          BUNDLE_FILE: ${{ inputs.bundleFilePath }}
+          BUNDLE_FILE: ${{ matrix.bundle }}
         run: |
           if [ ! -f "$BUNDLE_FILE" ]; then
             echo "Error: Bundle file not found: $BUNDLE_FILE"
@@ -52,8 +83,8 @@ jobs:
           AIRSHIP_SERVER_URL: ${{ secrets.AIRSHIP_SERVER_URL }}
           INPUT_APP_KEY: ${{ inputs.appKey }}
           INPUT_RUNTIME_VERSION: ${{ inputs.runtimeVersion }}
-          INPUT_PLATFORM: ${{ inputs.platform }}
-          INPUT_BUNDLE: ${{ inputs.bundleFilePath }}
+          INPUT_PLATFORM: ${{ matrix.platform }}
+          INPUT_BUNDLE: ${{ matrix.bundle }}
           INPUT_CHANNEL: ${{ inputs.channel }}
         run: |
           ./scripts/publish-update.sh \
