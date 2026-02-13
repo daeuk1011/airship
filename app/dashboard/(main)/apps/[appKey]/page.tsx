@@ -1,6 +1,6 @@
 import { db } from "@/shared/libs/db";
-import { apps, updates, channels, channelAssignments } from "@/shared/libs/db/schema";
-import { eq, desc } from "drizzle-orm";
+import { apps, updates, channels, channelAssignments, rollbackHistory } from "@/shared/libs/db/schema";
+import { eq, desc, count } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { BackLink } from "@/shared/ui/back-link";
@@ -49,6 +49,12 @@ export default async function AppDetailPage({
     }
   }
 
+  const rollbackCount = db
+    .select({ count: count() })
+    .from(rollbackHistory)
+    .where(eq(rollbackHistory.appId, app.id))
+    .get()!.count;
+
   return (
     <div className="p-8">
       <div className="mb-6">
@@ -63,6 +69,12 @@ export default async function AppDetailPage({
           className="px-3 py-1.5 text-sm border border-foreground/20 rounded-md hover:bg-foreground/5 transition-colors"
         >
           Channels ({channelList.length})
+        </Link>
+        <Link
+          href={`/dashboard/apps/${appKey}/rollbacks`}
+          className="px-3 py-1.5 text-sm border border-foreground/20 rounded-md hover:bg-foreground/5 transition-colors"
+        >
+          Rollback History ({rollbackCount})
         </Link>
       </div>
 
@@ -94,6 +106,9 @@ export default async function AppDetailPage({
                   </p>
                   <p className="text-xs text-foreground/50">
                     {update.platform} &middot; rv {update.runtimeVersion}
+                    <span className="text-foreground/40 font-mono ml-1">
+                      {update.bundleHash.slice(0, 12)}
+                    </span>
                   </p>
                 </div>
               </div>
