@@ -11,10 +11,13 @@ export const dynamic = "force-dynamic";
 
 export default async function AppDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ appKey: string }>;
+  searchParams: Promise<{ platform?: string }>;
 }) {
   const { appKey } = await params;
+  const { platform: platformFilter } = await searchParams;
 
   const app = db.select().from(apps).where(eq(apps.appKey, appKey)).get();
 
@@ -49,6 +52,10 @@ export default async function AppDetailPage({
     }
   }
 
+  const filteredUpdates = platformFilter
+    ? updateList.filter((u) => u.platform === platformFilter)
+    : updateList;
+
   const rollbackCount = db
     .select({ count: count() })
     .from(rollbackHistory)
@@ -82,13 +89,38 @@ export default async function AppDetailPage({
         <UploadUpdateForm appKey={appKey} />
       </Card>
 
-      <h2 className="text-lg font-semibold mb-3">Updates</h2>
+      <div className="flex items-center justify-between mb-3">
+        <h2 className="text-lg font-semibold">Updates</h2>
+        <div className="flex gap-1">
+          {["all", "ios", "android"].map((p) => {
+            const isActive =
+              p === "all" ? !platformFilter : platformFilter === p;
+            const href =
+              p === "all"
+                ? `/dashboard/apps/${appKey}`
+                : `/dashboard/apps/${appKey}?platform=${p}`;
+            return (
+              <Link
+                key={p}
+                href={href}
+                className={`px-2.5 py-1 text-xs rounded-md transition-colors ${
+                  isActive
+                    ? "bg-foreground text-background font-medium"
+                    : "text-foreground/50 hover:bg-foreground/5"
+                }`}
+              >
+                {p === "all" ? "All" : p === "ios" ? "iOS" : "Android"}
+              </Link>
+            );
+          })}
+        </div>
+      </div>
 
-      {updateList.length === 0 ? (
+      {filteredUpdates.length === 0 ? (
         <p className="text-foreground/50 text-sm">No updates yet.</p>
       ) : (
         <CardList>
-          {updateList.map((update) => (
+          {filteredUpdates.map((update) => (
             <Link
               key={update.id}
               href={`/dashboard/apps/${appKey}/updates/${update.id}`}
