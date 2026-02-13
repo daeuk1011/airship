@@ -17,40 +17,41 @@ function hashClientId(clientId: string, rolloutPercent: number): boolean {
   return value < rolloutPercent;
 }
 
-function buildMultipartResponse(manifest: object): NextResponse {
+const MULTIPART_HEADERS = {
+  "expo-protocol-version": "1",
+  "expo-sfv-version": "0",
+  "cache-control": "private, max-age=0",
+};
+
+function buildMultipartResponse(parts: { name: string; body: string; contentType?: string }[]): NextResponse {
   const boundary = crypto.randomUUID();
 
-  const manifestJson = JSON.stringify(manifest);
-  const extensionsJson = JSON.stringify({ assetRequestHeaders: {} });
+  const encoded = parts.map(
+    (p) =>
+      [
+        `--${boundary}`,
+        `Content-Disposition: form-data; name="${p.name}"`,
+        `Content-Type: ${p.contentType ?? "application/json"}`,
+        "",
+        p.body,
+      ].join("\r\n")
+  );
 
-  const parts = [
-    [
-      `--${boundary}`,
-      `Content-Disposition: form-data; name="manifest"`,
-      "Content-Type: application/json; charset=utf-8",
-      "",
-      manifestJson,
-    ].join("\r\n"),
-    [
-      `--${boundary}`,
-      `Content-Disposition: form-data; name="extensions"`,
-      "Content-Type: application/json",
-      "",
-      extensionsJson,
-    ].join("\r\n"),
-  ];
-
-  const body = parts.join("\r\n") + `\r\n--${boundary}--\r\n`;
+  const body = encoded.join("\r\n") + `\r\n--${boundary}--\r\n`;
 
   return new NextResponse(body, {
     status: 200,
     headers: {
+      ...MULTIPART_HEADERS,
       "content-type": `multipart/mixed; boundary=${boundary}`,
-      "expo-protocol-version": "1",
-      "expo-sfv-version": "0",
-      "cache-control": "private, max-age=0",
     },
   });
+}
+
+function noUpdateAvailableResponse(): NextResponse {
+  return buildMultipartResponse([
+    { name: "directive", body: JSON.stringify({ type: "noUpdateAvailable" }) },
+  ]);
 }
 
 export async function GET(
@@ -102,10 +103,7 @@ async function handleManifest(
     .get();
 
   if (!channel) {
-    return new NextResponse(null, {
-      status: 204,
-      headers: { "expo-protocol-version": "1" },
-    });
+    return noUpdateAvailableResponse();
   }
 
   const assignment = db
@@ -122,10 +120,7 @@ async function handleManifest(
     .get();
 
   if (!assignment) {
-    return new NextResponse(null, {
-      status: 204,
-      headers: { "expo-protocol-version": "1" },
-    });
+    return noUpdateAvailableResponse();
   }
 
   // Rollout percentage check
@@ -134,16 +129,10 @@ async function handleManifest(
       request.headers.get("expo-current-update-id") ??
       request.headers.get("eas-client-id");
     if (!clientId) {
-      return new NextResponse(null, {
-        status: 204,
-        headers: { "expo-protocol-version": "1" },
-      });
+      return noUpdateAvailableResponse();
     }
     if (!hashClientId(clientId, assignment.rolloutPercent)) {
-      return new NextResponse(null, {
-        status: 204,
-        headers: { "expo-protocol-version": "1" },
-      });
+      return noUpdateAvailableResponse();
     }
   }
 
@@ -160,10 +149,13 @@ async function handleManifest(
     .get();
 
   if (!update) {
-    return new NextResponse(null, {
-      status: 204,
-      headers: { "expo-protocol-version": "1" },
-    });
+    return noUpdateAvailableResponse();
+  }
+
+  // Client already has this update — skip sending full manifest
+  const currentUpdateId = request.headers.get("expo-current-update-id");
+  if (currentUpdateId === update.id) {
+    return noUpdateAvailableResponse();
   }
 
   const updateAssets = db
@@ -209,5 +201,8 @@ async function handleManifest(
     },
   };
 
-  return buildMultipartResponse(manifest);
+  return buildMultipartResponse([
+    { name: "manifest", body: JSON.stringify(manifest), contentType: "application/json; charset=utf-8" },
+    { name: "extensions", body: JSON.stringify({ assetRequestHeaders: {} }) },
+  ]);
 }
