@@ -69,9 +69,27 @@ export async function POST(
   const fromUpdateId = assignment.updateId;
   const now = Date.now();
 
-  // Update channel assignment pointer
+  // Republish: create a new update with the same bundle but new ID/timestamp
+  // so expo-updates clients treat it as a newer update
+  const newUpdateId = uuidv4();
+  db.insert(updates)
+    .values({
+      id: newUpdateId,
+      appId: app.id,
+      updateGroupId: uuidv4(),
+      runtimeVersion: targetUpdate.runtimeVersion,
+      platform: targetUpdate.platform,
+      bundleS3Key: targetUpdate.bundleS3Key,
+      bundleHash: targetUpdate.bundleHash,
+      bundleSize: targetUpdate.bundleSize,
+      enabled: 1,
+      createdAt: now,
+    })
+    .run();
+
+  // Update channel assignment to point to the republished update
   db.update(channelAssignments)
-    .set({ updateId: targetUpdateId, updatedAt: now })
+    .set({ updateId: newUpdateId, updatedAt: now })
     .where(eq(channelAssignments.id, assignment.id))
     .run();
 
@@ -82,7 +100,7 @@ export async function POST(
       appId: app.id,
       channelId: channel.id,
       fromUpdateId,
-      toUpdateId: targetUpdateId,
+      toUpdateId: newUpdateId,
       reason: reason ?? null,
       createdAt: now,
     })
@@ -91,7 +109,8 @@ export async function POST(
   return NextResponse.json({
     rolledBack: true,
     fromUpdateId,
-    toUpdateId: targetUpdateId,
+    toUpdateId: newUpdateId,
+    republishedFrom: targetUpdateId,
     channelName,
     runtimeVersion: targetUpdate.runtimeVersion,
   });
