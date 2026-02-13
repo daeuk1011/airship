@@ -1,13 +1,34 @@
 import { db } from "@/shared/libs/db";
-import { apps } from "@/shared/libs/db/schema";
+import { apps, updates } from "@/shared/libs/db/schema";
+import { eq, count, max } from "drizzle-orm";
 import Link from "next/link";
 import { CreateAppForm } from "@/features/apps/components/create-app-form";
 import { CardList } from "@/shared/ui/card";
+import { timeAgo, formatAbsolute } from "@/shared/utils/time";
 
 export const dynamic = "force-dynamic";
 
 export default function AppsPage() {
   const appList = db.select().from(apps).all();
+
+  const appStats = new Map<
+    string,
+    { updateCount: number; lastUpdate: number | null }
+  >();
+  for (const app of appList) {
+    const [result] = db
+      .select({
+        updateCount: count(),
+        lastUpdate: max(updates.createdAt),
+      })
+      .from(updates)
+      .where(eq(updates.appId, app.id))
+      .all();
+    appStats.set(app.id, {
+      updateCount: result.updateCount,
+      lastUpdate: result.lastUpdate,
+    });
+  }
 
   return (
     <div className="p-8">
@@ -19,26 +40,63 @@ export default function AppsPage() {
 
       <div className="mt-8">
         {appList.length === 0 ? (
-          <p className="text-foreground/50 text-sm">
-            No apps yet. Create one above.
-          </p>
+          <div className="flex flex-col items-center justify-center py-12 text-center">
+            <svg
+              width="40"
+              height="40"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="text-foreground/20 mb-3"
+            >
+              <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
+              <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
+              <line x1="12" y1="22.08" x2="12" y2="12" />
+            </svg>
+            <p className="text-foreground/50 text-sm">No apps yet</p>
+            <p className="text-foreground/30 text-xs mt-1">
+              Create your first app using the form above
+            </p>
+          </div>
         ) : (
           <CardList>
-            {appList.map((app) => (
-              <Link
-                key={app.id}
-                href={`/dashboard/apps/${app.appKey}`}
-                className="flex items-center justify-between p-4 hover:bg-foreground/[0.03] transition-colors"
-              >
-                <div>
-                  <p className="font-medium">{app.name}</p>
-                  <p className="text-sm text-foreground/50">{app.appKey}</p>
-                </div>
-                <span className="text-xs text-foreground/40">
-                  {new Date(app.createdAt).toLocaleDateString()}
-                </span>
-              </Link>
-            ))}
+            {appList.map((app) => {
+              const stats = appStats.get(app.id);
+              return (
+                <Link
+                  key={app.id}
+                  href={`/dashboard/apps/${app.appKey}`}
+                  className="flex items-center justify-between p-4 hover:bg-foreground/[0.03] transition-colors"
+                >
+                  <div>
+                    <p className="font-medium">{app.name}</p>
+                    <p className="text-sm text-foreground/50">{app.appKey}</p>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    {stats && stats.updateCount > 0 && (
+                      <span className="text-xs px-1.5 py-0.5 rounded bg-foreground/10">
+                        {stats.updateCount} update{stats.updateCount !== 1 ? "s" : ""}
+                      </span>
+                    )}
+                    <span
+                      className="text-xs text-foreground/40"
+                      title={
+                        stats?.lastUpdate
+                          ? formatAbsolute(stats.lastUpdate)
+                          : undefined
+                      }
+                    >
+                      {stats?.lastUpdate
+                        ? timeAgo(stats.lastUpdate)
+                        : new Date(app.createdAt).toLocaleDateString()}
+                    </span>
+                  </div>
+                </Link>
+              );
+            })}
           </CardList>
         )}
       </div>

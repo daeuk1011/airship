@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { BackLink } from "@/shared/ui/back-link";
 import { CardList } from "@/shared/ui/card";
+import { timeAgo, formatAbsolute } from "@/shared/utils/time";
 
 export const dynamic = "force-dynamic";
 
@@ -53,7 +54,26 @@ export default async function RollbackHistoryPage({
       </div>
 
       {enriched.length === 0 ? (
-        <p className="text-foreground/50 text-sm">No rollback history.</p>
+        <div className="flex flex-col items-center justify-center py-12 text-center">
+          <svg
+            width="40"
+            height="40"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="text-foreground/20 mb-3"
+          >
+            <polyline points="1 4 1 10 7 10" />
+            <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" />
+          </svg>
+          <p className="text-foreground/50 text-sm">No rollback history</p>
+          <p className="text-foreground/30 text-xs mt-1">
+            Rollbacks will appear here when you revert an update
+          </p>
+        </div>
       ) : (
         <CardList>
           {enriched.map((rb) => (
@@ -72,8 +92,11 @@ export default async function RollbackHistoryPage({
                     </span>
                   )}
                 </div>
-                <span className="text-xs text-foreground/40">
-                  {new Date(rb.createdAt).toLocaleString()}
+                <span
+                  className="text-xs text-foreground/40"
+                  title={formatAbsolute(rb.createdAt)}
+                >
+                  {timeAgo(rb.createdAt)}
                 </span>
               </div>
 

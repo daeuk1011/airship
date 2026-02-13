@@ -7,6 +7,8 @@ import { Card } from "@/shared/ui/card";
 import { CardList } from "@/shared/ui/card";
 import { RollbackButton } from "@/features/updates/components/rollback-button";
 import { PromoteButton } from "@/features/updates/components/promote-button";
+import { CopyButton } from "@/shared/ui/copy-button";
+import { timeAgo, formatAbsolute } from "@/shared/utils/time";
 
 export const dynamic = "force-dynamic";
 
@@ -54,6 +56,33 @@ export default async function UpdateDetailPage({
     if (assignment) assignedChannels.push(ch.name);
   }
 
+  const manifestJson = JSON.stringify(
+    {
+      id: update.id,
+      createdAt: new Date(update.createdAt).toISOString(),
+      runtimeVersion: update.runtimeVersion,
+      launchAsset: {
+        hash: update.bundleHash,
+        key: "bundle",
+        fileExtension: ".bundle",
+        contentType: "application/javascript",
+        url: `<presigned-url for ${update.bundleS3Key}>`,
+      },
+      assets: assetList.map((a) => ({
+        hash: a.hash,
+        key: a.key,
+        fileExtension: a.fileExtension,
+        contentType: a.contentType,
+        url: `<presigned-url for ${a.s3Key}>`,
+      })),
+      metadata: { branchName: assignedChannels[0] ?? "unknown" },
+    },
+    null,
+    2
+  );
+
+  const manifestLines = manifestJson.split("\n");
+
   return (
     <div className="p-8">
       <div className="mb-6">
@@ -67,14 +96,15 @@ export default async function UpdateDetailPage({
             Info
           </h2>
           <dl className="space-y-2 text-sm">
-            <Row label="ID" value={update.id} mono />
-            <Row label="Group ID" value={update.updateGroupId} mono />
+            <CopyRow label="ID" value={update.id} mono />
+            <CopyRow label="Group ID" value={update.updateGroupId} mono />
             <Row label="Platform" value={update.platform} />
             <Row label="Runtime Version" value={update.runtimeVersion} />
             <Row
               label="Status"
               value={update.enabled ? "Enabled" : "Disabled"}
             />
+            <CopyRow label="Bundle Hash" value={update.bundleHash} mono />
             <Row
               label="Bundle Size"
               value={
@@ -83,10 +113,12 @@ export default async function UpdateDetailPage({
                   : "N/A"
               }
             />
-            <Row
-              label="Created"
-              value={new Date(update.createdAt).toLocaleString()}
-            />
+            <div className="flex justify-between">
+              <dt className="text-foreground/50">Created</dt>
+              <dd title={formatAbsolute(update.createdAt)}>
+                {timeAgo(update.createdAt)}
+              </dd>
+            </div>
             <div className="flex justify-between">
               <dt className="text-foreground/50">Channels</dt>
               <dd className="flex gap-1.5 flex-wrap justify-end">
@@ -158,30 +190,14 @@ export default async function UpdateDetailPage({
       <div className="mt-6">
         <h2 className="text-lg font-semibold mb-3">Manifest Preview</h2>
         <pre className="bg-foreground/5 rounded-lg p-4 text-xs overflow-auto max-h-80 font-mono">
-          {JSON.stringify(
-            {
-              id: update.id,
-              createdAt: new Date(update.createdAt).toISOString(),
-              runtimeVersion: update.runtimeVersion,
-              launchAsset: {
-                hash: update.bundleHash,
-                key: "bundle",
-                fileExtension: ".bundle",
-                contentType: "application/javascript",
-                url: `<presigned-url for ${update.bundleS3Key}>`,
-              },
-              assets: assetList.map((a) => ({
-                hash: a.hash,
-                key: a.key,
-                fileExtension: a.fileExtension,
-                contentType: a.contentType,
-                url: `<presigned-url for ${a.s3Key}>`,
-              })),
-              metadata: { branchName: assignedChannels[0] ?? "unknown" },
-            },
-            null,
-            2
-          )}
+          {manifestLines.map((line, i) => (
+            <div key={i} className="flex">
+              <span className="inline-block w-8 text-right mr-4 text-foreground/25 select-none">
+                {i + 1}
+              </span>
+              <span>{line}</span>
+            </div>
+          ))}
         </pre>
       </div>
     </div>
@@ -201,6 +217,28 @@ function Row({
     <div className="flex justify-between">
       <dt className="text-foreground/50">{label}</dt>
       <dd className={mono ? "font-mono text-xs" : ""}>{value}</dd>
+    </div>
+  );
+}
+
+function CopyRow({
+  label,
+  value,
+  mono,
+}: {
+  label: string;
+  value: string;
+  mono?: boolean;
+}) {
+  return (
+    <div className="flex justify-between items-center">
+      <dt className="text-foreground/50">{label}</dt>
+      <dd className="flex items-center gap-1">
+        <span className={mono ? "font-mono text-xs truncate max-w-48" : ""}>
+          {value}
+        </span>
+        <CopyButton text={value} />
+      </dd>
     </div>
   );
 }

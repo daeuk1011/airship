@@ -1,6 +1,7 @@
 import { db } from "@/shared/libs/db";
 import { apps, updates, channels, channelAssignments, rollbackHistory } from "@/shared/libs/db/schema";
 import { eq, desc, count } from "drizzle-orm";
+import { timeAgo, formatAbsolute } from "@/shared/utils/time";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { BackLink } from "@/shared/ui/back-link";
@@ -117,7 +118,27 @@ export default async function AppDetailPage({
       </div>
 
       {filteredUpdates.length === 0 ? (
-        <p className="text-foreground/50 text-sm">No updates yet.</p>
+        <div className="flex flex-col items-center justify-center py-12 text-center">
+          <svg
+            width="40"
+            height="40"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="text-foreground/20 mb-3"
+          >
+            <polyline points="16 16 12 12 8 16" />
+            <line x1="12" y1="12" x2="12" y2="21" />
+            <path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3" />
+          </svg>
+          <p className="text-foreground/50 text-sm">No updates yet</p>
+          <p className="text-foreground/30 text-xs mt-1">
+            Upload a bundle using the form above
+          </p>
+        </div>
       ) : (
         <CardList>
           {filteredUpdates.map((update) => (
@@ -155,8 +176,11 @@ export default async function AppDetailPage({
                     </span>
                   ))}
                 </div>
-                <p className="text-xs text-foreground/40 mt-1">
-                  {new Date(update.createdAt).toLocaleString()}
+                <p
+                  className="text-xs text-foreground/40 mt-1"
+                  title={formatAbsolute(update.createdAt)}
+                >
+                  {timeAgo(update.createdAt)}
                 </p>
               </div>
             </Link>

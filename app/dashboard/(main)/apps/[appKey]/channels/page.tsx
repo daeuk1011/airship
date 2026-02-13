@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { BackLink } from "@/shared/ui/back-link";
 import { Card } from "@/shared/ui/card";
+import { timeAgo, formatAbsolute } from "@/shared/utils/time";
 
 export const dynamic = "force-dynamic";
 
@@ -52,14 +53,36 @@ export default async function ChannelsPage({
       </div>
 
       {channelsWithAssignments.length === 0 ? (
-        <p className="text-foreground/50 text-sm">No channels.</p>
+        <div className="flex flex-col items-center justify-center py-12 text-center">
+          <svg
+            width="40"
+            height="40"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="text-foreground/20 mb-3"
+          >
+            <line x1="22" y1="2" x2="11" y2="13" />
+            <polygon points="22 2 15 22 11 13 2 9 22 2" />
+          </svg>
+          <p className="text-foreground/50 text-sm">No channels yet</p>
+          <p className="text-foreground/30 text-xs mt-1">
+            Channels are created when you promote an update
+          </p>
+        </div>
       ) : (
         <div className="space-y-4">
           {channelsWithAssignments.map((ch) => (
             <Card key={ch.id}>
               <h3 className="font-semibold text-lg">{ch.name}</h3>
               <p className="text-xs text-foreground/40 mb-3">
-                Created {new Date(ch.createdAt).toLocaleDateString()}
+                Created{" "}
+                <span title={formatAbsolute(ch.createdAt)}>
+                  {timeAgo(ch.createdAt)}
+                </span>
               </p>
 
               {ch.assignments.length === 0 ? (
@@ -94,8 +117,11 @@ export default async function ChannelsPage({
                         <span className="text-xs text-foreground/50">
                           {a.rolloutPercent}%
                         </span>
-                        <span className="text-xs text-foreground/40">
-                          {new Date(a.updatedAt).toLocaleString()}
+                        <span
+                          className="text-xs text-foreground/40"
+                          title={formatAbsolute(a.updatedAt)}
+                        >
+                          {timeAgo(a.updatedAt)}
                         </span>
                       </div>
                     </div>
