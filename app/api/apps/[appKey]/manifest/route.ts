@@ -6,6 +6,11 @@ import { errorResponse } from "@/shared/libs/http/error";
 import { getPresignedDownloadUrl } from "@/shared/libs/s3";
 import crypto from "crypto";
 
+function hexToBase64Url(hex: string): string {
+  const buf = Buffer.from(hex, "hex");
+  return buf.toString("base64url");
+}
+
 function hashClientId(clientId: string, rolloutPercent: number): boolean {
   const hash = crypto.createHash("sha256").update(clientId).digest();
   const value = hash.readUInt16BE(0) % 100;
@@ -172,7 +177,7 @@ async function handleManifest(
 
   const manifestAssets = await Promise.all(
     updateAssets.map(async (asset) => ({
-      hash: asset.hash,
+      hash: hexToBase64Url(asset.hash),
       key: asset.key,
       fileExtension: asset.fileExtension,
       contentType: asset.contentType ?? "application/octet-stream",
@@ -185,7 +190,7 @@ async function handleManifest(
     createdAt: new Date(update.createdAt).toISOString(),
     runtimeVersion: update.runtimeVersion,
     launchAsset: {
-      hash: update.bundleHash,
+      hash: hexToBase64Url(update.bundleHash),
       key: "bundle",
       fileExtension: ".bundle",
       contentType: "application/javascript",
