@@ -18,9 +18,9 @@
     },
     {
       "idx": 2,
-      "version": "6",
-      "when": 1770967477867,
-      "tag": "0002_opposite_madrox",
+      "version": "7",
+      "when": 1770968918064,
+      "tag": "0002_api_tokens",
       "breakpoints": true
     }
   ]
