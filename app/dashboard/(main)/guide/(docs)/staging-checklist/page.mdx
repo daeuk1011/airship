@@ -1,16 +1,16 @@
-# Staging Verification Checklist (iOS/Android Cross-Platform)
+# Staging Verification Checklist
 
-## 1) Apply Migration
+## 1) 마이그레이션 적용
 
 ```bash
 bun run db:migrate
 ```
 
 Expected:
-- migration `0001_channel_assignments_platform` applied
-- `channel_assignments` table has `platform` column
+- `channel_assignments` 테이블에 `platform` 컬럼 존재
+- `api_tokens` 테이블 생성됨
 
-## 2) Run Integration Tests Locally First
+## 2) 로컬 테스트 실행
 
 ```bash
 bun run test:integration
@@ -18,46 +18,88 @@ bun run verify:platform
 ```
 
 Expected:
-- API validation tests pass
-- migration/platform uniqueness test passes
-- local server-based integration checks pass
+- API 검증 테스트 통과
+- 플랫폼별 유니크 제약 조건 테스트 통과
 
-## 3) Staging Manual Scenario
+## 3) 크로스 플랫폼 배포 시나리오
 
-Use same `appKey`, same `runtimeVersion`, same `channel`, but different `platform`.
+동일한 `appKey`, `runtimeVersion`, `channel`에 서로 다른 `platform`으로 배포합니다.
 
-1. Upload/commit iOS update to `staging`
-2. Upload/commit Android update to `staging`
-3. Request manifest with iOS headers
-4. Request manifest with Android headers
-
-Example manifest request shape:
+1. iOS 업데이트를 `staging`에 업로드
+2. Android 업데이트를 `staging`에 업로드
+3. iOS 헤더로 매니페스트 요청
+4. Android 헤더로 매니페스트 요청
 
 ```bash
+# iOS 매니페스트 요청
 curl -i -X POST "https://<staging-host>/api/apps/<appKey>/manifest" \
   -H "expo-platform: ios" \
   -H "expo-runtime-version: 1.0.0" \
   -H "expo-channel-name: staging"
+
+# Android 매니페스트 요청
+curl -i -X POST "https://<staging-host>/api/apps/<appKey>/manifest" \
+  -H "expo-platform: android" \
+  -H "expo-runtime-version: 1.0.0" \
+  -H "expo-channel-name: staging"
 ```
 
-Then repeat with `expo-platform: android`.
+Expected:
+- iOS 요청은 iOS 번들 반환
+- Android 요청은 Android 번들 반환
+- 한 플랫폼 배포가 다른 플랫폼 할당을 덮어쓰지 않음
+
+## 4) 업데이트 토글 검증
+
+1. 대시보드에서 특정 업데이트의 **Disable** 버튼 클릭
+2. 해당 업데이트가 할당된 채널로 매니페스트 요청
+3. 비활성화된 업데이트가 응답에 포함되지 않는지 확인
+4. **Enable** 버튼으로 다시 활성화 후 정상 응답 확인
+
+## 5) 롤아웃 비율 검증
+
+1. Channels 페이지에서 특정 할당의 퍼센트를 클릭하여 50%로 변경
+2. 동일 조건으로 매니페스트를 여러 번 요청
+3. 약 50%의 요청에서 업데이트가 반환되는지 확인
+4. 100%로 복원
+
+## 6) API 토큰 검증
+
+1. 대시보드 **Tokens** 페이지에서 토큰 생성
+2. 생성된 토큰으로 API 호출 테스트
+
+```bash
+# API Token으로 인증
+curl -H "Authorization: Bearer airship_xxxx..." \
+  https://<staging-host>/api/apps
+```
 
 Expected:
-- iOS request returns iOS launch bundle
-- Android request returns Android launch bundle
-- one platform deploy must not overwrite the other platform assignment
+- 유효한 토큰으로 200 응답
+- 잘못된 토큰으로 401 응답
+- Tokens 페이지에서 "Last used" 시간 갱신 확인
 
-## 4) Optional DB Sanity Query
+## 7) 앱 삭제 검증
 
-Check same `(app_id, channel_id, runtime_version)` has both platforms:
+> 테스트용 앱에서만 수행할 것
+
+1. 테스트용 앱 생성 후 업데이트, 채널 할당 추가
+2. 앱 상세 페이지에서 **Delete App** 클릭
+3. 관련 데이터(업데이트, 채널, 할당, 에셋)가 모두 삭제됐는지 확인
+
+## 8) DB Sanity Query
 
 ```sql
-select app_id, channel_id, runtime_version, platform, update_id
-from channel_assignments
-where app_id = '<app-id>' and runtime_version = '1.0.0'
-order by platform;
+-- 플랫폼별 할당 확인
+SELECT app_id, channel_id, runtime_version, platform, update_id
+FROM channel_assignments
+WHERE app_id = '<app-id>' AND runtime_version = '1.0.0'
+ORDER BY platform;
+
+-- API 토큰 확인 (hash만 저장됨)
+SELECT id, name, created_at, last_used_at FROM api_tokens;
 ```
 
 Expected:
-- one row for `ios`
-- one row for `android`
+- channel_assignments: 동일 (app, channel, rv)에 ios/android 각 1행
+- api_tokens: 토큰 이름과 시간 정보 확인 (평문 토큰은 저장되지 않음)

@@ -3,7 +3,7 @@
 ## Publish Flow
 
 ```
-Bundle build → publish-update.sh → auto-assigned to staging → promote to production on dashboard
+Bundle build → publish-update.sh → staging 자동 할당 → 대시보드에서 production promote
 ```
 
 ## Prerequisites
@@ -14,11 +14,22 @@ Bundle build → publish-update.sh → auto-assigned to staging → promote to p
 - `jq`
 - `shasum` (macOS) or `sha256sum` (Linux)
 
+### Authentication
+
+API 인증은 두 가지 방식을 지원합니다:
+
+| 방식 | Header | 용도 |
+|------|--------|------|
+| Admin Secret | `Bearer <ADMIN_SECRET>` | 로컬 개발, 초기 설정 |
+| API Token | `Bearer airship_xxx...` | CI/CD, 자동화 스크립트 |
+
+API Token은 대시보드의 **Tokens** 페이지에서 생성할 수 있습니다. CI/CD 환경에서는 Admin Secret 대신 API Token 사용을 권장합니다.
+
 ### Environment Variables
 
 | Variable | Description | Required |
 |------|------|------|
-| `AIRSHIP_ADMIN_SECRET` | Bearer token for API authentication | Yes |
+| `AIRSHIP_ADMIN_SECRET` | Bearer token (Admin Secret 또는 API Token) | Yes |
 | `AIRSHIP_SERVER_URL` | Airship server URL | When `--server` is not specified |
 
 ## Manual Deploy (Local)
@@ -26,7 +37,11 @@ Bundle build → publish-update.sh → auto-assigned to staging → promote to p
 ### 1. Export Expo Bundle
 
 ```bash
+# iOS
 npx expo export --platform ios --output-dir dist
+
+# Android
+npx expo export --platform android --output-dir dist
 ```
 
 ### 2. Publish OTA Update
@@ -42,29 +57,29 @@ export AIRSHIP_ADMIN_SECRET="your-admin-secret"
   --bundle ./dist/bundles/ios-xxxxx.js
 ```
 
-The default channel is `staging`. Use `--channel` to deploy to a different channel.
+기본 채널은 `staging`입니다. `--channel` 옵션으로 다른 채널에 배포할 수 있습니다.
 
 ### 3. Promote on Dashboard
 
-1. Go to Dashboard → App → Update detail page
-2. The currently assigned channel is shown as a badge
-3. In the Promote section, select staging → production and click Promote
+1. Dashboard → App → Updates 목록에서 업데이트 클릭
+2. 현재 할당된 채널이 배지로 표시됨
+3. Promote 섹션에서 staging → production 선택 후 Promote 클릭
 
 ## App Repo CI Integration
 
-Call `publish-update.sh` directly from GitHub Actions in the app repo after building the bundle.
+앱 레포의 GitHub Actions에서 번들 빌드 후 `publish-update.sh`를 직접 호출합니다.
 
 ### 1. Secrets Configuration
 
-Add the following in the app repo under Settings → Secrets and variables → Actions:
+앱 레포의 Settings → Secrets and variables → Actions에 추가:
 
-- `AIRSHIP_ADMIN_SECRET` — API authentication token
+- `AIRSHIP_ADMIN_SECRET` — API Token (대시보드 Tokens 페이지에서 생성)
 - `AIRSHIP_SERVER_URL` — Airship server URL
 
 ### 2. Workflow Example
 
 ```yaml
-# .github/workflows/ota-publish.yml (add to app repo)
+# .github/workflows/ota-publish.yml (앱 레포에 추가)
 name: OTA Publish
 on:
   push:
@@ -109,7 +124,7 @@ jobs:
             --bundle dist/bundles/${{ matrix.platform }}.js
 ```
 
-iOS/Android run in parallel via the matrix strategy. The default channel is `staging` — promote to production from the dashboard.
+iOS/Android가 matrix로 병렬 실행됩니다. 기본 채널은 `staging` — 대시보드에서 production으로 promote합니다.
 
 ## Script Options
 
@@ -125,3 +140,15 @@ iOS/Android run in parallel via the matrix strategy. The default channel is `sta
 | `--platform PLATFORM` | ios or android | (required) |
 | `--bundle PATH` | Bundle file path | (required) |
 | `--channel NAME` | Target channel | staging |
+
+## Dashboard Features
+
+업데이트 배포 후 대시보드에서 활용할 수 있는 기능:
+
+| 기능 | 위치 | 설명 |
+|------|------|------|
+| Flat/Grouped 뷰 | App 상세 | iOS+Android 쌍을 그룹으로 묶어 확인 |
+| 번들 사이즈 | App 상세, Update 상세 | 각 업데이트의 번들 크기 표시 |
+| Runtime Versions | App 상세 | RV별 업데이트 수, 채널 할당 여부 |
+| Enable/Disable | Update 상세 | 특정 업데이트를 비활성화하여 배포 중단 |
+| Rollout % 조절 | Channels 페이지 | 점진적 롤아웃 (0-100%) |

@@ -1,12 +1,10 @@
-# Production Operations Checklist (AWS t4g.micro)
+# Production Operations Checklist
 
 ## 1) Health Check Monitoring
 
 - Health endpoint: `GET /`
 - Interval: 1 minute
 - Alert condition: 3 consecutive failures
-
-Quick check:
 
 ```bash
 curl -fsS http://localhost/ >/dev/null && echo "ok" || echo "failed"
@@ -58,7 +56,7 @@ aws cloudwatch put-metric-alarm \
   --alarm-actions "$SNS_TOPIC_ARN"
 ```
 
-Disk usage alarm (`/home/ec2-user/data`): install and configure CloudWatch Agent, then alarm on `disk_used_percent >= 85`.
+Disk usage alarm:
 
 ```bash
 aws cloudwatch put-metric-alarm \
@@ -78,7 +76,7 @@ aws cloudwatch put-metric-alarm \
 
 ## 3) Container Runtime Checks
 
-After each deploy:
+배포 후 확인:
 
 ```bash
 docker ps --filter name=airship
@@ -86,16 +84,24 @@ docker inspect -f '{{.State.Status}} restart={{.RestartCount}}' airship
 docker logs --tail=200 airship
 ```
 
-Alert policy:
-- `airship` container not running
-- Restart count increases continuously
-- Repeated migration/DB write errors in logs
+Alert 조건:
+- `airship` 컨테이너 미실행
+- Restart count 지속 증가
+- 마이그레이션/DB 쓰기 에러 반복
 
-## 4) Rollback Runbook
+## 4) OTA Rollback Runbook
 
-Store previous image tag and rollback command before each release.
+### 대시보드를 통한 OTA 롤백
 
-Rollback example:
+특정 업데이트에 문제가 발생한 경우:
+
+1. **즉시 비활성화**: Update 상세 → **Disable Update** 클릭 (매니페스트에서 즉시 제외)
+2. **롤백 실행**: 이전 정상 업데이트의 상세 페이지에서 Rollback 섹션 사용
+3. **롤아웃 비율 조절**: Channels 페이지에서 해당 채널의 롤아웃을 0%로 낮춰 긴급 차단 가능
+
+### 서버 롤백
+
+릴리스 전 이전 이미지 태그를 기록해두세요.
 
 ```bash
 ECR_REGISTRY=<account>.dkr.ecr.ap-northeast-2.amazonaws.com
@@ -111,7 +117,27 @@ docker run -d --name airship --restart unless-stopped \
   "$ECR_REGISTRY/airship:$PREV_TAG"
 ```
 
-Rollback trigger:
-- Health check failure over 5 minutes
-- 5xx surge after deployment
-- Migration failure at startup
+서버 롤백 트리거:
+- Health check 5분 이상 실패
+- 배포 후 5xx 급증
+- 시작 시 마이그레이션 실패
+
+## 5) API Token Rotation
+
+API Token 교체 절차:
+
+1. 대시보드 **Tokens** 페이지에서 새 토큰 생성
+2. CI/CD secrets에 새 토큰 값 업데이트
+3. 새 토큰으로 API 호출 정상 확인 후 이전 토큰 **Revoke**
+
+> API Token은 생성 시 한 번만 표시됩니다. 즉시 CI secrets에 저장하세요.
+
+## 6) App Cleanup
+
+더 이상 사용하지 않는 앱 정리:
+
+1. 앱 상세 페이지에서 **Delete App** 클릭
+2. 확인 다이얼로그에서 삭제 승인
+3. DB의 모든 관련 데이터(업데이트, 채널, 할당, 에셋, 롤백 히스토리)가 cascade 삭제됨
+
+> S3 오브젝트는 자동 삭제되지 않습니다. 필요 시 수동으로 S3 버킷을 정리하세요.
