@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createHmac, timingSafeEqual } from "node:crypto";
+import { createHmac, createHash, timingSafeEqual } from "node:crypto";
+import { db } from "@/shared/libs/db";
+import { apiTokens } from "@/shared/libs/db/schema";
+import { eq } from "drizzle-orm";
 import { errorResponse } from "@/shared/libs/http/error";
 
 const SESSION_COOKIE = "airship_session";
@@ -25,8 +28,27 @@ export function verifyAuth(request: NextRequest): NextResponse | null {
   const authHeader = request.headers.get("authorization");
   if (authHeader?.startsWith("Bearer ")) {
     const token = authHeader.slice(7);
+
+    // Check admin secret
     if (secret && token === secret) {
       return null;
+    }
+
+    // Check API token (airship_ prefix)
+    if (token.startsWith("airship_")) {
+      const tokenHash = createHash("sha256").update(token).digest("hex");
+      const found = db
+        .select({ id: apiTokens.id })
+        .from(apiTokens)
+        .where(eq(apiTokens.tokenHash, tokenHash))
+        .get();
+      if (found) {
+        db.update(apiTokens)
+          .set({ lastUsedAt: Date.now() })
+          .where(eq(apiTokens.id, found.id))
+          .run();
+        return null;
+      }
     }
   }
 

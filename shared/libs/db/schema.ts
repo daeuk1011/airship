@@ -90,6 +90,14 @@ export const channelAssignments = sqliteTable(
   ]
 );
 
+export const apiTokens = sqliteTable("api_tokens", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  tokenHash: text("token_hash").notNull().unique(),
+  createdAt: integer("created_at").notNull(),
+  lastUsedAt: integer("last_used_at"),
+});
+
 export const rollbackHistory = sqliteTable("rollback_history", {
   id: text("id").primaryKey(),
   appId: text("app_id")
