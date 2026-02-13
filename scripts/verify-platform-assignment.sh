@@ -14,7 +14,11 @@ cd "${ROOT_DIR}"
 export DATABASE_URL="file:${TMP_DB}"
 
 echo "[verify-platform] applying migrations"
-bun run db:migrate >"${MIGRATE_LOG}" 2>&1
+if ! bun run db:migrate >"${MIGRATE_LOG}" 2>&1; then
+  echo "[verify-platform] migration failed:"
+  cat "${MIGRATE_LOG}"
+  exit 1
+fi
 
 sqlite3 "${TMP_DB}" <<'SQL'
 PRAGMA foreign_keys = ON;
