@@ -1,6 +1,6 @@
 import { db } from "@/shared/libs/db";
 import { apps, updates, channels, channelAssignments, rollbackHistory } from "@/shared/libs/db/schema";
-import { count, desc, eq, gte, and } from "drizzle-orm";
+import { count, desc, eq, gte } from "drizzle-orm";
 import { Card, CardList } from "@/shared/ui/card";
 import { timeAgo, formatAbsolute } from "@/shared/utils/time";
 import Link from "next/link";
@@ -22,7 +22,7 @@ export default function DashboardOverview() {
     .from(updates)
     .where(eq(updates.platform, "android"))
     .all();
-  const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+  const sevenDaysAgo = new Date().getTime() - 7 * 24 * 60 * 60 * 1000;
   const [recentRollbackCount] = db
     .select({ value: count() })
     .from(rollbackHistory)

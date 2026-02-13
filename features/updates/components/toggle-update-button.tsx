@@ -17,7 +17,6 @@ export function ToggleUpdateButton({
   const [loading, setLoading] = useState(false);
 
   async function handleToggle() {
-    const action = enabled ? "disable" : "enable";
     if (!confirm(`${enabled ? "Disable" : "Enable"} this update?`)) return;
 
     setLoading(true);
