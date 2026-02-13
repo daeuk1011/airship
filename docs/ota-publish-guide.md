@@ -1,54 +1,47 @@
 # OTA Publish Guide
 
-Use this guide when you already completed **Quick Start** and want repeatable OTA publishing.
+Use this guide after completing `docs/quick-start.md`.
 
-- First time user: `docs/quick-start.md`
-- This page: daily publish flow and CI automation
-
-## Fast Path (Most Common)
+## Simple Daily Flow
 
 ```bash
-export AIRSHIP_ADMIN_SECRET="airship_xxx..."
 export AIRSHIP_SERVER_URL="https://ota.example.com"
+export AIRSHIP_TOKEN="airship_xxx..."
+export AIRSHIP_ADMIN_SECRET="$AIRSHIP_TOKEN"
+export AIRSHIP_APP_KEY="my-app"
+export AIRSHIP_RUNTIME_VERSION="1.0.0"
 
 npx expo export --platform ios --output-dir dist
+BUNDLE_PATH="$(ls -1 dist/bundles/ios-*.js 2>/dev/null | head -n 1)"
 
 ./scripts/publish-update.sh \
-  --app-key my-app \
-  --runtime-version 1.0.0 \
+  --app-key "$AIRSHIP_APP_KEY" \
+  --runtime-version "$AIRSHIP_RUNTIME_VERSION" \
   --platform ios \
-  --bundle ./dist/bundles/ios-xxxxx.js
+  --bundle "$BUNDLE_PATH"
 ```
 
-Then promote on dashboard: `staging -> production`.
+Then promote `staging -> production` from dashboard.
 
 ## Required Inputs
 
 | Input | Example | Notes |
 |---|---|---|
-| `AIRSHIP_ADMIN_SECRET` | `airship_xxx...` | API token recommended |
+| `AIRSHIP_TOKEN` | `airship_xxx...` | Preferred token variable |
+| `AIRSHIP_ADMIN_SECRET` | same as token | Script compatibility variable |
 | `AIRSHIP_SERVER_URL` | `https://ota.example.com` | Base URL |
-| `--app-key` | `my-app` | Must exist in Dashboard |
+| `--app-key` | `my-app` | Existing app key |
 | `--runtime-version` | `1.0.0` | Must match client runtime |
-| `--platform` | `ios` / `android` | One platform per command |
-| `--bundle` | `./dist/bundles/...js` | Exported bundle path |
+| `--platform` | `ios` / `android` | One platform per publish |
+| `--bundle` | `dist/bundles/...js` | Exported bundle path |
 
-## Script Reference
+## Script Options
 
 ```bash
 ./scripts/publish-update.sh --help
 ```
 
-| Option | Description | Default |
-|---|---|---|
-| `--server URL` | Airship server URL | `$AIRSHIP_SERVER_URL` |
-| `--app-key KEY` | App key | required |
-| `--runtime-version VER` | Runtime version | required |
-| `--platform PLATFORM` | `ios` or `android` | required |
-| `--bundle PATH` | Bundle file path | required |
-| `--channel NAME` | Target channel | `staging` |
-
-## CI Automation (GitHub Actions)
+## CI Example (GitHub Actions)
 
 ```yaml
 name: OTA Publish
@@ -78,9 +71,10 @@ jobs:
           chmod +x publish-update.sh
 
       - env:
-          AIRSHIP_ADMIN_SECRET: ${{ secrets.AIRSHIP_ADMIN_SECRET }}
           AIRSHIP_SERVER_URL: ${{ secrets.AIRSHIP_SERVER_URL }}
+          AIRSHIP_TOKEN: ${{ secrets.AIRSHIP_TOKEN }}
         run: |
+          export AIRSHIP_ADMIN_SECRET="$AIRSHIP_TOKEN"
           ./publish-update.sh \
             --app-key my-app \
             --runtime-version 1.0.0 \
@@ -93,9 +87,9 @@ jobs:
 - `401 Unauthorized`: token missing/invalid/revoked
 - `App not found`: wrong app key
 - `Bundle not found on S3`: upload URL expired or wrong key in commit
-- `no such table: api_tokens`: server migration is not applied
+- `no such table: api_tokens`: migration not applied on server
 
 ## Next
 
-- Validation before release: `docs/staging-cross-platform-checklist.md`
-- Operations and incidents: `docs/production-operations-checklist.md`
+- Staging verification: `docs/staging-cross-platform-checklist.md`
+- Production ops: `docs/production-operations-checklist.md`
