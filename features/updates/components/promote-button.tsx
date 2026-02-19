@@ -5,6 +5,8 @@ import { useState } from "react";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
 import { Select } from "@/shared/ui/select";
+import { ConfirmDialog } from "@/shared/ui/confirm-dialog";
+import { useToast } from "@/shared/ui/toast";
 
 export function PromoteButton({
   appKey,
@@ -18,6 +20,7 @@ export function PromoteButton({
   assignedChannels?: string[];
 }) {
   const router = useRouter();
+  const { toast } = useToast();
   const [fromChannel, setFromChannel] = useState(
     assignedChannels.includes("staging")
       ? "staging"
@@ -28,14 +31,9 @@ export function PromoteButton({
   );
   const [rollout, setRollout] = useState("100");
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState("");
 
   async function handlePromote() {
-    if (!confirm(`Promote this update from ${fromChannel} to ${toChannel}?`))
-      return;
-
     setLoading(true);
-    setResult("");
 
     try {
       const res = await fetch(
@@ -53,13 +51,13 @@ export function PromoteButton({
 
       const data = await res.json();
       if (res.ok) {
-        setResult("Promote successful");
+        toast("Promote successful", "success");
         router.refresh();
       } else {
-        setResult(data.error ?? "Promote failed");
+        toast(data.error ?? "Promote failed", "error");
       }
     } catch {
-      setResult("Network error");
+      toast("Network error", "error");
     } finally {
       setLoading(false);
     }
@@ -107,17 +105,24 @@ export function PromoteButton({
           className="w-16"
         />
         <span className="text-xs text-foreground/50">%</span>
-        <Button
-          size="sm"
-          onClick={handlePromote}
-          disabled={loading || noAssignment}
+        <ConfirmDialog
+          title="Promote Update"
+          description={`Promote this update from ${fromChannel} to ${toChannel}?`}
+          confirmLabel="Promote"
+          onConfirm={handlePromote}
         >
-          {loading ? "..." : "Promote"}
-        </Button>
+          {(open) => (
+            <Button
+              size="sm"
+              onClick={open}
+              loading={loading}
+              disabled={noAssignment}
+            >
+              Promote
+            </Button>
+          )}
+        </ConfirmDialog>
       </div>
-      {result && (
-        <p className="text-xs text-foreground/60">{result}</p>
-      )}
     </div>
   );
 }

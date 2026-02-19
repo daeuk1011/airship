@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
+import { useToast } from "@/shared/ui/toast";
 
 export function EditRolloutButton({
   appKey,
@@ -17,6 +18,7 @@ export function EditRolloutButton({
   currentPercent: number;
 }) {
   const router = useRouter();
+  const { toast } = useToast();
   const [editing, setEditing] = useState(false);
   const [value, setValue] = useState(String(currentPercent));
   const [loading, setLoading] = useState(false);
@@ -36,11 +38,14 @@ export function EditRolloutButton({
         }
       );
       if (res.ok) {
+        toast("Rollout updated", "success");
         setEditing(false);
         router.refresh();
+      } else {
+        toast("Failed to update rollout", "error");
       }
     } catch {
-      // ignore
+      toast("Network error", "error");
     } finally {
       setLoading(false);
     }
@@ -68,8 +73,8 @@ export function EditRolloutButton({
         onChange={(e) => setValue(e.target.value)}
         className="w-16"
       />
-      <Button size="sm" onClick={handleSave} disabled={loading}>
-        {loading ? "..." : "Save"}
+      <Button size="sm" onClick={handleSave} loading={loading}>
+        Save
       </Button>
       <Button
         size="sm"

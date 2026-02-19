@@ -3,6 +3,8 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/shared/ui/button";
+import { ConfirmDialog } from "@/shared/ui/confirm-dialog";
+import { useToast } from "@/shared/ui/toast";
 
 export function ToggleUpdateButton({
   appKey,
@@ -14,11 +16,10 @@ export function ToggleUpdateButton({
   enabled: boolean;
 }) {
   const router = useRouter();
+  const { toast } = useToast();
   const [loading, setLoading] = useState(false);
 
   async function handleToggle() {
-    if (!confirm(`${enabled ? "Disable" : "Enable"} this update?`)) return;
-
     setLoading(true);
     try {
       const res = await fetch(
@@ -26,10 +27,16 @@ export function ToggleUpdateButton({
         { method: "POST" }
       );
       if (res.ok) {
+        toast(
+          enabled ? "Update disabled" : "Update enabled",
+          "success"
+        );
         router.refresh();
+      } else {
+        toast("Failed to toggle update", "error");
       }
     } catch {
-      // ignore
+      toast("Network error", "error");
     } finally {
       setLoading(false);
     }
@@ -38,14 +45,24 @@ export function ToggleUpdateButton({
   return (
     <div className="space-y-2">
       <p className="text-sm font-medium">Status</p>
-      <Button
-        variant={enabled ? "outline" : "primary"}
-        size="sm"
-        onClick={handleToggle}
-        disabled={loading}
+      <ConfirmDialog
+        title={enabled ? "Disable Update" : "Enable Update"}
+        description={`Are you sure you want to ${enabled ? "disable" : "enable"} this update?`}
+        confirmLabel={enabled ? "Disable" : "Enable"}
+        variant={enabled ? "danger" : "default"}
+        onConfirm={handleToggle}
       >
-        {loading ? "..." : enabled ? "Disable Update" : "Enable Update"}
-      </Button>
+        {(open) => (
+          <Button
+            variant={enabled ? "outline" : "primary"}
+            size="sm"
+            onClick={open}
+            loading={loading}
+          >
+            {enabled ? "Disable Update" : "Enable Update"}
+          </Button>
+        )}
+      </ConfirmDialog>
     </div>
   );
 }

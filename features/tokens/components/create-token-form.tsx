@@ -5,9 +5,11 @@ import { useState } from "react";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
 import { CopyButton } from "@/shared/ui/copy-button";
+import { useToast } from "@/shared/ui/toast";
 
 export function CreateTokenForm() {
   const router = useRouter();
+  const { toast } = useToast();
   const [name, setName] = useState("");
   const [loading, setLoading] = useState(false);
   const [createdToken, setCreatedToken] = useState<string | null>(null);
@@ -28,9 +30,11 @@ export function CreateTokenForm() {
         setCreatedToken(data.token);
         setName("");
         router.refresh();
+      } else {
+        toast("Failed to create token", "error");
       }
     } catch {
-      // ignore
+      toast("Network error", "error");
     } finally {
       setLoading(false);
     }
@@ -47,8 +51,8 @@ export function CreateTokenForm() {
           placeholder="Token name"
           className="flex-1"
         />
-        <Button size="sm" type="submit" disabled={loading || !name.trim()}>
-          {loading ? "..." : "Create Token"}
+        <Button size="sm" type="submit" disabled={!name.trim()} loading={loading}>
+          Create Token
         </Button>
       </form>
 

@@ -5,6 +5,8 @@ import { useState } from "react";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
 import { Select } from "@/shared/ui/select";
+import { ConfirmDialog } from "@/shared/ui/confirm-dialog";
+import { useToast } from "@/shared/ui/toast";
 
 export function RollbackButton({
   appKey,
@@ -16,16 +18,13 @@ export function RollbackButton({
   channels: string[];
 }) {
   const router = useRouter();
+  const { toast } = useToast();
   const [channel, setChannel] = useState(channels[0] ?? "production");
   const [reason, setReason] = useState("");
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState("");
 
   async function handleRollback() {
-    if (!confirm(`Rollback ${channel} channel to this update?`)) return;
-
     setLoading(true);
-    setResult("");
 
     try {
       const res = await fetch(
@@ -39,13 +38,13 @@ export function RollbackButton({
 
       const data = await res.json();
       if (res.ok) {
-        setResult("Rollback successful");
+        toast("Rollback successful", "success");
         router.refresh();
       } else {
-        setResult(data.error ?? "Rollback failed");
+        toast(data.error ?? "Rollback failed", "error");
       }
     } catch {
-      setResult("Network error");
+      toast("Network error", "error");
     } finally {
       setLoading(false);
     }
@@ -73,18 +72,25 @@ export function RollbackButton({
           placeholder="Reason (optional)"
           className="flex-1"
         />
-        <Button
-          variant="destructive"
-          size="sm"
-          onClick={handleRollback}
-          disabled={loading}
+        <ConfirmDialog
+          title="Rollback Channel"
+          description={`Rollback ${channel} channel to this update?`}
+          confirmLabel="Rollback"
+          variant="danger"
+          onConfirm={handleRollback}
         >
-          {loading ? "..." : "Rollback"}
-        </Button>
+          {(open) => (
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={open}
+              loading={loading}
+            >
+              Rollback
+            </Button>
+          )}
+        </ConfirmDialog>
       </div>
-      {result && (
-        <p className="text-xs text-foreground/60">{result}</p>
-      )}
     </div>
   );
 }

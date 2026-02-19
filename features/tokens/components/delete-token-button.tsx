@@ -3,6 +3,8 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/shared/ui/button";
+import { ConfirmDialog } from "@/shared/ui/confirm-dialog";
+import { useToast } from "@/shared/ui/toast";
 
 export function DeleteTokenButton({
   tokenId,
@@ -12,33 +14,45 @@ export function DeleteTokenButton({
   tokenName: string;
 }) {
   const router = useRouter();
+  const { toast } = useToast();
   const [loading, setLoading] = useState(false);
 
   async function handleDelete() {
-    if (!confirm(`Revoke token "${tokenName}"?`)) return;
-
     setLoading(true);
     try {
       const res = await fetch(`/api/tokens/${tokenId}`, { method: "DELETE" });
       if (res.ok) {
+        toast(`Token "${tokenName}" revoked`, "success");
         router.refresh();
+      } else {
+        toast("Failed to revoke token", "error");
       }
     } catch {
-      // ignore
+      toast("Network error", "error");
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <Button
-      variant="ghost"
-      size="sm"
-      onClick={handleDelete}
-      disabled={loading}
-      className="text-red-500 hover:text-red-600"
+    <ConfirmDialog
+      title="Revoke Token"
+      description={`Are you sure you want to revoke "${tokenName}"? This action cannot be undone.`}
+      confirmLabel="Revoke"
+      variant="danger"
+      onConfirm={handleDelete}
     >
-      {loading ? "..." : "Revoke"}
-    </Button>
+      {(open) => (
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={open}
+          loading={loading}
+          className="text-red-500 hover:text-red-600"
+        >
+          Revoke
+        </Button>
+      )}
+    </ConfirmDialog>
   );
 }
