@@ -4,14 +4,45 @@ If you are new to Airship, follow this page only.
 
 ## Goal
 
-Publish one iOS OTA update to `staging`, then promote to `production`.
+Publish iOS + Android OTA updates to `staging`, then manually promote to `production`.
 
 ## 0) One-Time Setup in Dashboard
 
 1. Create an app in **Apps** (example: `my-app`).
 2. Create an API token in **Tokens**.
 
-## 1) Copy-Paste Flow (CLI)
+## 1) Dashboard Flow (Recommended)
+
+1. Open **Apps > my-app**.
+2. In **Upload Update**:
+   - Platform: choose `iOS + Android` (or one platform).
+   - Runtime/channel: keep suggested values unless you need custom values.
+   - Upload bundle files.
+3. Click **Check** (preflight).
+4. Keep **Auto promote after upload** OFF (default).
+5. Click **Upload**.
+
+Expected:
+- Each uploaded platform gets a new update ID.
+- Updates are assigned to `staging`.
+
+## 2) Promote to Production (Recommended)
+
+1. Open the uploaded update detail page.
+2. In **Promote**, choose `staging -> production`.
+3. Keep rollout `100%`, then click **Promote**.
+
+## 3) Optional: Auto Promote (Advanced)
+
+Use only if your release process is already stable.
+
+1. Turn on **Auto promote after upload**.
+2. Set target channel (usually `production`) and rollout.
+3. Upload.
+
+Note: default is OFF to reduce accidental production releases.
+
+## 4) CLI Flow (Fallback)
 
 ```bash
 export AIRSHIP_SERVER_URL="http://<your-server>"
@@ -35,15 +66,7 @@ fi
   --bundle "$BUNDLE_PATH"
 ```
 
-Expected: update appears in Dashboard and is assigned to `staging`.
-
-## 2) Promote to Production
-
-1. Open the uploaded update detail page.
-2. In **Promote**, choose `staging -> production`.
-3. Keep rollout `100%`, then click **Promote**.
-
-## 3) Validate (No False Positive)
+## 5) Validate (No False Positive)
 
 ```bash
 curl -sS -X POST "$AIRSHIP_SERVER_URL/api/apps/$AIRSHIP_APP_KEY/manifest" \
@@ -62,6 +85,7 @@ fi
 
 - `401 Unauthorized`: token missing/invalid/revoked.
 - `App not found`: wrong app key.
+- `Invalid request body`: check preflight input fields (`platform/runtime/channel/bundle`).
 - `no such table: api_tokens`: server migration not applied.
 
 ## Next

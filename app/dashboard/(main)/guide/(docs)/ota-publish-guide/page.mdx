@@ -4,7 +4,38 @@ Use this guide after completing **Quick Start (10 min)**.
 
 ---
 
-## Simple Daily Flow
+## Daily Dashboard Flow (Recommended)
+
+1. Open **Apps > <appKey>**.
+2. In **Upload Update**:
+   - Choose platform (`iOS`, `Android`, or `iOS + Android`).
+   - Verify runtime/channel values.
+   - Upload bundle files.
+3. Click **Check** and confirm preflight results.
+4. Keep **Auto promote after upload** OFF (default).
+5. Click **Upload**.
+6. Promote `staging -> production` manually.
+
+Why this flow: preflight catches obvious mistakes before S3 upload/commit.
+
+---
+
+## Optional Auto Promote (Default OFF)
+
+Enable only when your release process is stable.
+
+- Toggle: **Auto promote after upload**
+- Source channel: upload channel (for example `staging`)
+- Target channel: usually `production`
+- Rollout: `0-100`
+
+Safety checks:
+- Source and target channels must be different.
+- Invalid rollout values are blocked.
+
+---
+
+## CLI Flow
 
 ```bash
 export AIRSHIP_SERVER_URL="https://ota.example.com"
@@ -96,6 +127,7 @@ jobs:
 
 - `401 Unauthorized`: token missing/invalid/revoked.
 - `App not found`: wrong app key.
+- `Invalid request body`: check preflight/runtime/channel inputs.
 - `Bundle not found on S3`: upload URL expired or wrong key in commit.
 - `no such table: api_tokens`: migration not applied on server.
 
