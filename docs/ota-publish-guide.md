@@ -4,7 +4,7 @@ Use this guide after completing `docs/quick-start.md`.
 
 ## Daily Dashboard Flow (Recommended)
 
-1. Open **Apps > <appKey>**.
+1. Open **Apps > `<appKey>`**.
 2. In **Upload Update**:
    - Choose platform (`iOS`, `Android`, or `iOS + Android`).
    - Verify runtime/channel values.
