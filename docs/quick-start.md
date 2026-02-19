@@ -32,17 +32,12 @@ Expected:
 2. In **Promote**, choose `staging -> production`.
 3. Keep rollout `100%`, then click **Promote**.
 
-## 3) Optional: Auto Promote (Advanced)
+## 3) Promotion Policy
 
-Use only if your release process is already stable.
+- Keep **Auto promote after upload** OFF.
+- Use manual promotion only (`staging -> production`) after verification.
 
-1. Turn on **Auto promote after upload**.
-2. Set target channel (usually `production`) and rollout.
-3. Upload.
-
-Note: default is OFF to reduce accidental production releases.
-
-## 4) CLI Flow (Fallback)
+## 4) CLI Flow (Fallback, Manual Promote Policy)
 
 ```bash
 export AIRSHIP_SERVER_URL="http://<your-server>"
@@ -64,6 +59,9 @@ fi
   --runtime-version "$AIRSHIP_RUNTIME_VERSION" \
   --platform ios \
   --bundle "$BUNDLE_PATH"
+
+# For safety, direct production publish is blocked by default.
+# Use --allow-production-channel only for exceptional cases.
 ```
 
 ## 5) Validate (No False Positive)

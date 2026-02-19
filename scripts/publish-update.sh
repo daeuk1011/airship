@@ -20,6 +20,8 @@ Required:
 
 Optional:
   --channel NAME        Channel name (default: staging)
+  --allow-production-channel
+                       Allow direct publish to production channel
   --help                Show this help
 
 Environment:
@@ -39,7 +41,8 @@ Examples:
     --runtime-version 1.0.0 \\
     --platform ios \\
     --bundle ./dist/bundles/ios.js \\
-    --channel production
+    --channel production \\
+    --allow-production-channel
 EOF
   exit 0
 }
@@ -51,6 +54,7 @@ RUNTIME_VERSION=""
 PLATFORM=""
 BUNDLE=""
 CHANNEL="staging"
+ALLOW_PRODUCTION_CHANNEL=0
 
 # Parse args
 while [[ $# -gt 0 ]]; do
@@ -61,6 +65,7 @@ while [[ $# -gt 0 ]]; do
     --platform) PLATFORM="$2"; shift 2 ;;
     --bundle) BUNDLE="$2"; shift 2 ;;
     --channel) CHANNEL="$2"; shift 2 ;;
+    --allow-production-channel) ALLOW_PRODUCTION_CHANNEL=1; shift 1 ;;
     --help) usage ;;
     *) echo "Error: Unknown option $1"; exit 1 ;;
   esac
@@ -84,6 +89,12 @@ fi
 
 if [[ -z "${AIRSHIP_ADMIN_SECRET:-}" ]]; then
   echo "Error: AIRSHIP_ADMIN_SECRET environment variable is required"
+  exit 1
+fi
+
+if [[ "${CHANNEL}" == "production" && "${ALLOW_PRODUCTION_CHANNEL}" -ne 1 ]]; then
+  echo "Error: Direct publish to production is blocked by default."
+  echo "Use staging publish + manual promote, or pass --allow-production-channel to bypass."
   exit 1
 fi
 
@@ -212,3 +223,9 @@ echo ""
 echo "==> Success!"
 echo "    Update ID: $UPDATE_ID"
 echo "    Channel:   $CHANNEL"
+if [[ "${CHANNEL}" != "production" ]]; then
+  echo ""
+  echo "Next:"
+  echo "  1) Verify on ${CHANNEL}"
+  echo "  2) Manually promote ${CHANNEL} -> production from dashboard"
+fi

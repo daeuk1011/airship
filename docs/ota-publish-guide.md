@@ -16,18 +16,11 @@ Use this guide after completing `docs/quick-start.md`.
 
 Why this flow: preflight catches obvious mistakes before S3 upload/commit.
 
-## Optional Auto Promote (Default OFF)
+## Promotion Policy
 
-Enable only when your release process is stable.
-
-- Toggle: **Auto promote after upload**
-- Source channel: upload channel (for example `staging`)
-- Target channel: usually `production`
-- Rollout: `0-100`
-
-Safety checks:
-- Source and target channels must be different.
-- Invalid rollout values are blocked.
+- Keep **Auto promote after upload** OFF.
+- Promote to production manually after staging verification.
+- Direct CLI publish to `production` is blocked by default.
 
 ## CLI Flow
 
@@ -46,6 +39,9 @@ BUNDLE_PATH="$(ls -1 dist/bundles/ios-*.js 2>/dev/null | head -n 1)"
   --runtime-version "$AIRSHIP_RUNTIME_VERSION" \
   --platform ios \
   --bundle "$BUNDLE_PATH"
+
+# If channel is production, pass --allow-production-channel explicitly
+# (not recommended for normal flow).
 ```
 
 Then promote `staging -> production` from dashboard.
