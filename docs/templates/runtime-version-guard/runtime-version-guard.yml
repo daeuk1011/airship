@@ -1,0 +1,32 @@
+name: Runtime Version Guard
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+
+jobs:
+  runtime-version-guard:
+    if: github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Validate runtimeVersion bump for native changes
+        run: |
+          node scripts/ci/check-runtime-version.mjs \
+            "${{ github.event.pull_request.base.sha }}" \
+            "${{ github.sha }}"
+        env:
+          # Change these only if your app does not use app.json expo.runtimeVersion
+          RUNTIME_VERSION_FILE: app.json
+          RUNTIME_VERSION_JSON_PATH: expo.runtimeVersion
+          NATIVE_CHANGE_PATTERNS: ios/,android/,app.json,app.config.js,app.config.ts,app.config.mjs,app.config.cjs,eas.json,plugins/,package.json

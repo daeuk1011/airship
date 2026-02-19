@@ -119,5 +119,6 @@ jobs:
 
 ## Next
 
+- App repo runtime guard: `docs/runtime-version-guard.md`
 - Staging verification: `docs/staging-cross-platform-checklist.md`
 - Production ops: `docs/production-operations-checklist.md`

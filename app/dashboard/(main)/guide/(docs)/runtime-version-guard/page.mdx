@@ -1,0 +1,70 @@
+# Runtime Version Guard (App Repo)
+
+Use this to enforce `runtimeVersion` bumps in your Expo app repository when native-related files change.
+
+> This guard belongs in the **app repository**, not in the Airship server repository.
+
+---
+
+## Why this matters
+
+Airship resolves OTA updates by `(runtimeVersion, platform, channel)`.
+
+If native changes are merged without a `runtimeVersion` bump, clients can receive incompatible updates.
+
+---
+
+## Templates in this repository
+
+- Script template:
+  - `docs/templates/runtime-version-guard/check-runtime-version.mjs`
+- GitHub Actions template:
+  - `docs/templates/runtime-version-guard/runtime-version-guard.yml`
+
+---
+
+## Install to app repo
+
+```bash
+mkdir -p scripts/ci .github/workflows
+cp /path/to/airship/docs/templates/runtime-version-guard/check-runtime-version.mjs scripts/ci/check-runtime-version.mjs
+cp /path/to/airship/docs/templates/runtime-version-guard/runtime-version-guard.yml .github/workflows/runtime-version-guard.yml
+```
+
+Then commit and open a PR.
+
+---
+
+## Check logic
+
+1. Detect changed files in PR (`base...head`)
+2. Detect native-related paths (`ios/`, `android/`, `app.config.*`, `app.json`, `plugins/`, ...)
+3. Compare `runtimeVersion` from base vs head (default: `app.json` -> `expo.runtimeVersion`)
+4. Fail if native-related changes exist and runtime is unchanged
+
+---
+
+## Customization
+
+Set workflow env vars when needed:
+
+- `RUNTIME_VERSION_FILE`
+- `RUNTIME_VERSION_JSON_PATH`
+- `NATIVE_CHANGE_PATTERNS`
+
+---
+
+## Bump policy (recommended)
+
+- JS/asset-only: keep runtime version
+- Native/SDK/config plugin changes: bump runtime version
+
+Example: `1.4.0 -> 1.4.1`
+
+---
+
+## Related docs
+
+- Local doc file in this repo: `docs/runtime-version-guard.md`
+- Publish flow: **OTA Publish Guide**
+- Staging checks: **Staging Verification Checklist**

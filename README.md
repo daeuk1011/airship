@@ -6,6 +6,7 @@ Self-hosted Expo OTA update server.
 
 - First use (10 min): `docs/quick-start.md`
 - Daily publish + CI: `docs/ota-publish-guide.md`
+- App repo runtime guard template: `docs/runtime-version-guard.md`
 - Staging verification: `docs/staging-cross-platform-checklist.md`
 - Production operations: `docs/production-operations-checklist.md`
 
