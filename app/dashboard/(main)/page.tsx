@@ -30,9 +30,40 @@ export default function DashboardOverview() {
     .all();
 
   const stats = [
-    { label: "Apps", value: appCount.value },
-    { label: "Updates", value: updateCount.value },
-    { label: "Channels", value: channelCount.value },
+    {
+      label: "Apps",
+      value: appCount.value,
+      icon: (
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
+          <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
+          <line x1="12" y1="22.08" x2="12" y2="12" />
+        </svg>
+      ),
+    },
+    {
+      label: "Updates",
+      value: updateCount.value,
+      icon: (
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+          <polyline points="16 16 12 12 8 16" />
+          <line x1="12" y1="12" x2="12" y2="21" />
+          <path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3" />
+        </svg>
+      ),
+    },
+    {
+      label: "Channels",
+      value: channelCount.value,
+      icon: (
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+          <line x1="6" y1="3" x2="6" y2="15" />
+          <circle cx="18" cy="6" r="3" />
+          <circle cx="6" cy="18" r="3" />
+          <path d="M18 9a9 9 0 0 1-9 9" />
+        </svg>
+      ),
+    },
   ];
 
   const subStats = [
@@ -89,7 +120,10 @@ export default function DashboardOverview() {
       <h1 className="text-2xl font-bold mb-6">Overview</h1>
       <div className="grid grid-cols-3 gap-4">
         {stats.map((stat) => (
-          <Card key={stat.label} className="p-6">
+          <Card key={stat.label} className="p-6 relative">
+            <div className="absolute top-4 right-4 text-foreground/25">
+              {stat.icon}
+            </div>
             <p className="text-sm text-foreground/50">{stat.label}</p>
             <p className="text-3xl font-bold mt-1">{stat.value}</p>
           </Card>
@@ -98,7 +132,7 @@ export default function DashboardOverview() {
 
       <div className="grid grid-cols-3 gap-4 mt-3">
         {subStats.map((stat) => (
-          <div key={stat.label} className="px-4 py-3 rounded-lg bg-foreground/[0.03]">
+          <div key={stat.label} className="px-4 py-3 rounded-lg bg-foreground/[0.03] border-l-2 border-foreground/10">
             <p className="text-xs text-foreground/40">{stat.label}</p>
             <p className="text-lg font-semibold mt-0.5">{stat.value}</p>
           </div>

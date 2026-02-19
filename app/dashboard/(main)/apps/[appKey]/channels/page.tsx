@@ -3,7 +3,7 @@ import { apps, channels, channelAssignments, updates } from "@/shared/libs/db/sc
 import { eq } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { BackLink } from "@/shared/ui/back-link";
+import { Breadcrumb } from "@/shared/ui/breadcrumb";
 import { Card } from "@/shared/ui/card";
 import { timeAgo, formatAbsolute } from "@/shared/utils/time";
 import { EditRolloutButton } from "@/features/channels/components/edit-rollout-button";
@@ -49,7 +49,13 @@ export default async function ChannelsPage({
   return (
     <div className="p-8">
       <div className="mb-6">
-        <BackLink href={`/dashboard/apps/${appKey}`}>{app.name}</BackLink>
+        <Breadcrumb
+          items={[
+            { label: "Apps", href: "/dashboard/apps" },
+            { label: app.name, href: `/dashboard/apps/${appKey}` },
+            { label: "Channels" },
+          ]}
+        />
         <h1 className="text-2xl font-bold mt-2">Channels</h1>
       </div>
 

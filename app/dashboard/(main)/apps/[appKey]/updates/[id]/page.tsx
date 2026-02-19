@@ -2,7 +2,7 @@ import { db } from "@/shared/libs/db";
 import { apps, updates, assets, channelAssignments, channels } from "@/shared/libs/db/schema";
 import { eq, and } from "drizzle-orm";
 import { notFound } from "next/navigation";
-import { BackLink } from "@/shared/ui/back-link";
+import { Breadcrumb } from "@/shared/ui/breadcrumb";
 import { Card } from "@/shared/ui/card";
 import { CardList } from "@/shared/ui/card";
 import { RollbackButton } from "@/features/updates/components/rollback-button";
@@ -88,7 +88,13 @@ export default async function UpdateDetailPage({
   return (
     <div className="p-8">
       <div className="mb-6">
-        <BackLink href={`/dashboard/apps/${appKey}`}>{app.name}</BackLink>
+        <Breadcrumb
+          items={[
+            { label: "Apps", href: "/dashboard/apps" },
+            { label: app.name, href: `/dashboard/apps/${appKey}` },
+            { label: `Update ${id.slice(0, 8)}...` },
+          ]}
+        />
         <h1 className="text-2xl font-bold mt-2">Update Detail</h1>
       </div>
 
