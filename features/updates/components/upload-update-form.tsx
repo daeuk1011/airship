@@ -133,7 +133,7 @@ export function UploadUpdateForm({ appKey }: { appKey: string }) {
           type="file"
           accept=".hbc,.bundle,.js"
           disabled={isLoading}
-          className="block w-full text-sm text-foreground/70 file:mr-3 file:px-3 file:py-1 file:text-sm file:border file:border-foreground/20 file:rounded file:bg-background file:text-foreground/70 file:cursor-pointer hover:file:bg-foreground/5 file:transition-colors disabled:opacity-50"
+          className="block w-full text-sm text-foreground-2 file:mr-3 file:px-3 file:py-1 file:text-sm file:border file:border-white/10 file:rounded-md file:bg-white/[0.04] file:text-foreground-2 file:cursor-pointer hover:file:bg-white/[0.08] file:transition-colors disabled:opacity-50"
         />
 
         <div className="flex items-center gap-2 flex-wrap">
@@ -177,13 +177,13 @@ export function UploadUpdateForm({ appKey }: { appKey: string }) {
       </div>
 
       {step !== "idle" && step !== "error" && (
-        <p className="text-xs text-foreground/60">{STEP_LABELS[step]}</p>
+        <p className="text-xs text-accent">{STEP_LABELS[step]}</p>
       )}
 
-      {error && <p className="text-xs text-red-500">{error}</p>}
+      {error && <p className="text-xs text-error">{error}</p>}
 
       {resultId && (
-        <p className="text-xs text-green-600">
+        <p className="text-xs text-success">
           Update created: {resultId.slice(0, 8)}...
         </p>
       )}

@@ -5,7 +5,7 @@ type DivProps = HTMLAttributes<HTMLDivElement>;
 export function Card({ className = "", ...props }: DivProps) {
   return (
     <div
-      className={`border border-foreground/10 rounded-lg p-5 ${className}`}
+      className={`glass rounded-xl p-5 animate-fade-in ${className}`}
       {...props}
     />
   );
@@ -14,7 +14,7 @@ export function Card({ className = "", ...props }: DivProps) {
 export function CardList({ className = "", ...props }: DivProps) {
   return (
     <div
-      className={`border border-foreground/10 rounded-lg divide-y divide-foreground/10 ${className}`}
+      className={`glass rounded-xl divide-y divide-white/[0.06] overflow-hidden ${className}`}
       {...props}
     />
   );

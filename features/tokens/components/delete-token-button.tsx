@@ -48,7 +48,7 @@ export function DeleteTokenButton({
           size="sm"
           onClick={open}
           loading={loading}
-          className="text-red-500 hover:text-red-600"
+          className="text-error/70 hover:text-error"
         >
           Revoke
         </Button>

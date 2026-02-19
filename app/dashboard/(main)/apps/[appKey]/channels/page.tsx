@@ -61,22 +61,24 @@ export default async function ChannelsPage({
 
       {channelsWithAssignments.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-12 text-center">
-          <svg
-            width="40"
-            height="40"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className="text-foreground/20 mb-3"
-          >
-            <line x1="22" y1="2" x2="11" y2="13" />
-            <polygon points="22 2 15 22 11 13 2 9 22 2" />
-          </svg>
-          <p className="text-foreground/50 text-sm">No channels yet</p>
-          <p className="text-foreground/30 text-xs mt-1">
+          <div className="glass rounded-xl p-4 mb-3">
+            <svg
+              width="40"
+              height="40"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="text-foreground-3"
+            >
+              <line x1="22" y1="2" x2="11" y2="13" />
+              <polygon points="22 2 15 22 11 13 2 9 22 2" />
+            </svg>
+          </div>
+          <p className="text-foreground-2 text-sm">No channels yet</p>
+          <p className="text-foreground-3 text-xs mt-1">
             Channels are created when you promote an update
           </p>
         </div>
@@ -85,7 +87,7 @@ export default async function ChannelsPage({
           {channelsWithAssignments.map((ch) => (
             <Card key={ch.id}>
               <h3 className="font-semibold text-lg">{ch.name}</h3>
-              <p className="text-xs text-foreground/40 mb-3">
+              <p className="text-xs text-foreground-3 mb-3">
                 Created{" "}
                 <span title={formatAbsolute(ch.createdAt)}>
                   {timeAgo(ch.createdAt)}
@@ -93,7 +95,7 @@ export default async function ChannelsPage({
               </p>
 
               {ch.assignments.length === 0 ? (
-                <p className="text-sm text-foreground/50">
+                <p className="text-sm text-foreground-2">
                   No active assignments.
                 </p>
               ) : (
@@ -101,21 +103,21 @@ export default async function ChannelsPage({
                   {ch.assignments.map((a) => (
                     <div
                       key={a.id}
-                      className="flex items-center justify-between bg-foreground/[0.03] rounded px-3 py-2 text-sm"
+                      className="flex items-center justify-between bg-white/[0.03] rounded-lg border border-white/[0.05] px-3 py-2 text-sm"
                     >
                       <div>
-                        <span className="text-foreground/50">
+                        <span className="text-foreground-2">
                           rv {a.runtimeVersion}
                         </span>
-                        <span className="mx-2 text-foreground/30">&rarr;</span>
+                        <span className="mx-2 text-foreground-3">&rarr;</span>
                         <Link
                           href={`/dashboard/apps/${appKey}/updates/${a.updateId}`}
-                          className="font-mono text-xs hover:underline"
+                          className="font-mono text-xs hover:text-accent transition-colors"
                         >
                           {a.updateId.slice(0, 8)}...
                         </Link>
                         {a.update && (
-                          <span className="text-foreground/40 ml-2">
+                          <span className="text-foreground-3 ml-2">
                             ({a.update.platform})
                           </span>
                         )}
@@ -128,7 +130,7 @@ export default async function ChannelsPage({
                           currentPercent={a.rolloutPercent}
                         />
                         <span
-                          className="text-xs text-foreground/40"
+                          className="text-xs text-foreground-3"
                           title={formatAbsolute(a.updatedAt)}
                         >
                           {timeAgo(a.updatedAt)}

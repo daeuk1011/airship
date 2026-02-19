@@ -57,19 +57,19 @@ export function CreateTokenForm() {
       </form>
 
       {createdToken && (
-        <div className="p-3 rounded-md bg-green-500/10 border border-green-500/20">
-          <p className="text-xs text-foreground/60 mb-1">
+        <div className="p-3 rounded-lg bg-success/[0.06] border border-success/20">
+          <p className="text-xs text-foreground-2 mb-1">
             Copy this token now. It won&apos;t be shown again.
           </p>
           <div className="flex items-center gap-2">
-            <code className="text-xs font-mono flex-1 break-all">
+            <code className="text-xs font-mono flex-1 break-all bg-black/20 rounded px-2 py-1">
               {createdToken}
             </code>
             <CopyButton text={createdToken} />
           </div>
           <button
             onClick={() => setCreatedToken(null)}
-            className="text-xs text-foreground/40 hover:text-foreground/60 mt-2 cursor-pointer"
+            className="text-xs text-foreground-3 hover:text-foreground-2 mt-2 cursor-pointer transition-colors"
           >
             Dismiss
           </button>

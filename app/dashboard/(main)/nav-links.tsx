@@ -105,13 +105,16 @@ export function NavLinks() {
           <Link
             key={link.href}
             href={link.href}
-            className={`flex items-center gap-2.5 px-3 py-2 rounded-md text-sm transition-colors ${
+            className={`relative flex items-center gap-2.5 px-3 py-2 rounded-md text-sm transition-colors ${
               isActive
-                ? "bg-foreground/10 text-foreground font-medium"
-                : "text-foreground/70 hover:text-foreground hover:bg-foreground/5"
+                ? "bg-accent/[0.08] text-accent font-medium"
+                : "text-foreground-2 hover:text-foreground hover:bg-white/[0.04]"
             }`}
           >
-            <span className={isActive ? "text-foreground" : "text-foreground/50"}>
+            {isActive && (
+              <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-4 bg-accent rounded-r" />
+            )}
+            <span className={isActive ? "text-accent" : "text-foreground-3"}>
               {link.icon}
             </span>
             {link.label}

@@ -49,15 +49,15 @@ export function ConfirmDialog({
       {children(() => setIsOpen(true))}
       <dialog
         ref={dialogRef}
-        className="rounded-xl border border-foreground/10 bg-background p-0 shadow-xl backdrop:bg-black/50 max-w-sm w-full"
+        className="rounded-xl border border-white/[0.08] bg-[#0d1117]/95 backdrop-blur-xl p-0 shadow-2xl backdrop:bg-black/60 backdrop:backdrop-blur-sm max-w-sm w-full animate-scale-in"
         onClick={(e) => {
           if (e.target === dialogRef.current) setIsOpen(false);
         }}
       >
         <div className="p-6">
-          <h3 className="text-lg font-semibold">{title}</h3>
+          <h3 className="text-lg font-semibold text-foreground">{title}</h3>
           {description && (
-            <p className="text-sm text-foreground/60 mt-2">{description}</p>
+            <p className="text-sm text-foreground-2 mt-2">{description}</p>
           )}
           <div className="flex justify-end gap-2 mt-6">
             <Button variant="outline" size="sm" onClick={() => setIsOpen(false)}>

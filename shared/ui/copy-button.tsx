@@ -19,7 +19,7 @@ export function CopyButton({ text }: { text: string }) {
   return (
     <button
       onClick={handleCopy}
-      className="inline-flex items-center justify-center w-6 h-6 rounded hover:bg-foreground/10 transition-colors text-foreground/40 hover:text-foreground/70"
+      className="inline-flex items-center justify-center w-6 h-6 rounded hover:bg-accent/10 transition-colors text-foreground-3 hover:text-accent"
       title="Copy to clipboard"
     >
       {copied ? (
@@ -32,6 +32,7 @@ export function CopyButton({ text }: { text: string }) {
           strokeWidth="2"
           strokeLinecap="round"
           strokeLinejoin="round"
+          className="text-success"
         >
           <polyline points="20 6 9 17 4 12" />
         </svg>

@@ -120,11 +120,12 @@ export default function DashboardOverview() {
       <h1 className="text-2xl font-bold mb-6">Overview</h1>
       <div className="grid grid-cols-3 gap-4">
         {stats.map((stat) => (
-          <Card key={stat.label} className="p-6 relative">
-            <div className="absolute top-4 right-4 text-foreground/25">
+          <Card key={stat.label} className="p-6 relative overflow-hidden">
+            <div className="absolute -top-4 -right-4 w-24 h-24 bg-accent/[0.06] rounded-full blur-xl pointer-events-none" />
+            <div className="absolute top-4 right-4 text-foreground-3">
               {stat.icon}
             </div>
-            <p className="text-sm text-foreground/50">{stat.label}</p>
+            <p className="text-xs uppercase tracking-wider text-foreground-2">{stat.label}</p>
             <p className="text-3xl font-bold mt-1">{stat.value}</p>
           </Card>
         ))}
@@ -132,8 +133,8 @@ export default function DashboardOverview() {
 
       <div className="grid grid-cols-3 gap-4 mt-3">
         {subStats.map((stat) => (
-          <div key={stat.label} className="px-4 py-3 rounded-lg bg-foreground/[0.03] border-l-2 border-foreground/10">
-            <p className="text-xs text-foreground/40">{stat.label}</p>
+          <div key={stat.label} className="px-4 py-3 rounded-lg bg-surface-1 border-l-2 border-white/[0.08]">
+            <p className="text-xs text-foreground-3">{stat.label}</p>
             <p className="text-lg font-semibold mt-0.5">{stat.value}</p>
           </div>
         ))}
@@ -142,23 +143,25 @@ export default function DashboardOverview() {
       <h2 className="text-lg font-semibold mt-8 mb-3">Recent Updates</h2>
       {recentUpdates.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-12 text-center">
-          <svg
-            width="40"
-            height="40"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className="text-foreground/20 mb-3"
-          >
-            <polyline points="16 16 12 12 8 16" />
-            <line x1="12" y1="12" x2="12" y2="21" />
-            <path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3" />
-          </svg>
-          <p className="text-foreground/50 text-sm">No updates yet</p>
-          <p className="text-foreground/30 text-xs mt-1">
+          <div className="glass rounded-xl p-4 mb-3">
+            <svg
+              width="40"
+              height="40"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="text-foreground-3"
+            >
+              <polyline points="16 16 12 12 8 16" />
+              <line x1="12" y1="12" x2="12" y2="21" />
+              <path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3" />
+            </svg>
+          </div>
+          <p className="text-foreground-2 text-sm">No updates yet</p>
+          <p className="text-foreground-3 text-xs mt-1">
             Upload your first update from an app page
           </p>
         </div>
@@ -171,11 +174,11 @@ export default function DashboardOverview() {
               <Link
                 key={update.id}
                 href={`/dashboard/apps/${app?.appKey}/updates/${update.id}`}
-                className="flex items-center justify-between p-4 hover:bg-foreground/[0.03] transition-colors"
+                className="flex items-center justify-between p-4 hover:bg-white/[0.03] transition-colors"
               >
                 <div>
                   <p className="text-sm font-medium">{app?.name ?? "Unknown"}</p>
-                  <p className="text-xs text-foreground/50">
+                  <p className="text-xs text-foreground-2">
                     {update.platform} &middot; rv {update.runtimeVersion}
                   </p>
                 </div>
@@ -183,13 +186,13 @@ export default function DashboardOverview() {
                   {chNames.map((ch) => (
                     <span
                       key={ch}
-                      className="text-xs px-1.5 py-0.5 rounded bg-foreground/10"
+                      className="text-xs px-1.5 py-0.5 rounded bg-accent/10 text-accent border border-accent/20"
                     >
                       {ch}
                     </span>
                   ))}
                   <span
-                    className="text-xs text-foreground/40"
+                    className="text-xs text-foreground-3"
                     title={formatAbsolute(update.createdAt)}
                   >
                     {timeAgo(update.createdAt)}

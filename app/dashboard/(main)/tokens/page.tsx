@@ -25,33 +25,35 @@ export default function TokensPage() {
       <h1 className="text-2xl font-bold mb-6">API Tokens</h1>
 
       <Card className="mb-6">
-        <h2 className="text-sm font-semibold text-foreground/50 mb-3 uppercase tracking-wider">
+        <h2 className="text-xs font-semibold text-foreground-2 mb-3 uppercase tracking-wider">
           Create Token
         </h2>
         <CreateTokenForm />
       </Card>
 
-      <h2 className="text-lg font-semibold mb-3">
+      <h2 className="text-xs font-semibold text-foreground-2 mb-3 uppercase tracking-wider">
         Active Tokens ({tokens.length})
       </h2>
 
       {tokens.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-12 text-center">
-          <svg
-            width="40"
-            height="40"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className="text-foreground/20 mb-3"
-          >
-            <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4" />
-          </svg>
-          <p className="text-foreground/50 text-sm">No API tokens</p>
-          <p className="text-foreground/30 text-xs mt-1">
+          <div className="glass rounded-xl p-4 mb-3">
+            <svg
+              width="40"
+              height="40"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="text-foreground-3"
+            >
+              <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4" />
+            </svg>
+          </div>
+          <p className="text-foreground-2 text-sm">No API tokens</p>
+          <p className="text-foreground-3 text-xs mt-1">
             Create a token to authenticate API requests
           </p>
         </div>
@@ -64,7 +66,7 @@ export default function TokensPage() {
             >
               <div>
                 <p className="text-sm font-medium">{token.name}</p>
-                <p className="text-xs text-foreground/40">
+                <p className="text-xs text-foreground-3">
                   Created{" "}
                   <span title={formatAbsolute(token.createdAt)}>
                     {timeAgo(token.createdAt)}

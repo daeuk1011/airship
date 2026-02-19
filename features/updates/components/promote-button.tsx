@@ -69,7 +69,7 @@ export function PromoteButton({
     <div className="space-y-2">
       <p className="text-sm font-medium">Promote</p>
       {noAssignment && (
-        <p className="text-xs text-foreground/50">
+        <p className="text-xs text-foreground-2">
           This update is not assigned to any channel yet.
         </p>
       )}
@@ -84,7 +84,10 @@ export function PromoteButton({
             </option>
           ))}
         </Select>
-        <span className="text-foreground/40 text-sm">&rarr;</span>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-foreground-3">
+          <line x1="5" y1="12" x2="19" y2="12" />
+          <polyline points="12 5 19 12 12 19" />
+        </svg>
         <Select
           value={toChannel}
           onChange={(e) => setToChannel(e.target.value)}
@@ -104,7 +107,7 @@ export function PromoteButton({
           onChange={(e) => setRollout(e.target.value)}
           className="w-16"
         />
-        <span className="text-xs text-foreground/50">%</span>
+        <span className="text-xs text-foreground-2">%</span>
         <ConfirmDialog
           title="Promote Update"
           description={`Promote this update from ${fromChannel} to ${toChannel}?`}

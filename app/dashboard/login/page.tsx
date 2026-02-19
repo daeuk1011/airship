@@ -39,13 +39,13 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background">
-      <div className="w-full max-w-sm space-y-6">
-        <div className="flex flex-col items-center gap-3">
+    <div className="flex min-h-screen items-center justify-center bg-background bg-[radial-gradient(ellipse_at_center,rgba(6,182,212,0.06),transparent_60%)]">
+      <div className="w-full max-w-sm glass-elevated rounded-2xl p-8 animate-scale-in">
+        <div className="flex flex-col items-center gap-3 mb-8">
           <Logo size={56} />
           <div className="text-center">
             <h1 className="text-2xl font-bold tracking-tight">Airship</h1>
-            <p className="text-sm text-foreground/50 mt-1">
+            <p className="text-sm text-foreground-2 mt-1">
               Sign in to the dashboard
             </p>
           </div>
@@ -54,7 +54,7 @@ export default function LoginPage() {
           <div>
             <label
               htmlFor="password"
-              className="block text-sm text-foreground/70 mb-1.5"
+              className="block text-sm text-foreground-2 mb-1.5"
             >
               Password
             </label>
@@ -66,11 +66,18 @@ export default function LoginPage() {
               className="w-full"
             />
             {errors.password && (
-              <p className="mt-1 text-sm text-red-500">{errors.password.message}</p>
+              <p className="mt-1 text-sm text-error">{errors.password.message}</p>
             )}
           </div>
           {errors.root?.message && (
-            <p className="text-sm text-red-500">{errors.root.message}</p>
+            <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-error/10 border border-error/20 text-sm text-error">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10" />
+                <line x1="15" y1="9" x2="9" y2="15" />
+                <line x1="9" y1="9" x2="15" y2="15" />
+              </svg>
+              {errors.root.message}
+            </div>
           )}
           <Button
             type="submit"

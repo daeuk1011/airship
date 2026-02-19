@@ -47,7 +47,7 @@ export function CreateAppForm() {
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="flex items-end gap-3">
       <div>
-        <label className="block text-xs text-foreground/50 mb-1">
+        <label className="block text-xs text-foreground-2 mb-1 uppercase tracking-wider">
           App Key
         </label>
         <Input
@@ -56,11 +56,11 @@ export function CreateAppForm() {
           placeholder="my-app"
         />
         {errors.appKey && (
-          <p className="mt-1 text-sm text-red-500">{errors.appKey.message}</p>
+          <p className="mt-1 text-sm text-error">{errors.appKey.message}</p>
         )}
       </div>
       <div>
-        <label className="block text-xs text-foreground/50 mb-1">
+        <label className="block text-xs text-foreground-2 mb-1 uppercase tracking-wider">
           Display Name
         </label>
         <Input
@@ -69,13 +69,13 @@ export function CreateAppForm() {
           placeholder="My App"
         />
         {errors.name && (
-          <p className="mt-1 text-sm text-red-500">{errors.name.message}</p>
+          <p className="mt-1 text-sm text-error">{errors.name.message}</p>
         )}
       </div>
       <Button type="submit" disabled={isSubmitting}>
         {isSubmitting ? "Creating..." : "Create App"}
       </Button>
-      {errors.root?.message && <p className="text-sm text-red-500">{errors.root.message}</p>}
+      {errors.root?.message && <p className="text-sm text-error">{errors.root.message}</p>}
     </form>
   );
 }

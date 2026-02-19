@@ -1,8 +1,8 @@
 import { forwardRef, type InputHTMLAttributes } from "react";
 
 const inputSizes = {
-  sm: "px-2 py-1 text-sm border border-foreground/20 rounded bg-background",
-  md: "px-3 py-2 text-sm border border-foreground/20 rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-foreground/20",
+  sm: "px-2 py-1 text-sm border border-white/10 rounded-md bg-white/[0.04] focus:outline-none focus:border-accent/50 focus:ring-1 focus:ring-accent/30 transition-colors placeholder:text-foreground-3",
+  md: "px-3 py-2 text-sm border border-white/10 rounded-lg bg-white/[0.04] focus:outline-none focus:border-accent/50 focus:ring-2 focus:ring-accent/30 transition-colors placeholder:text-foreground-3",
 } as const;
 
 type InputProps = InputHTMLAttributes<HTMLInputElement> & {

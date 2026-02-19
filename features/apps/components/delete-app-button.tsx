@@ -50,8 +50,8 @@ export function DeleteAppButton({
   }
 
   return (
-    <div className="border border-red-500/30 rounded-lg p-4 space-y-3 bg-red-500/[0.03]">
-      <p className="text-sm text-foreground/70">
+    <div className="border border-error/20 rounded-xl p-4 space-y-3 bg-error/[0.03]">
+      <p className="text-sm text-foreground-2">
         Type <span className="font-mono font-semibold text-foreground">{appName}</span> to confirm deletion.
       </p>
       <Input
@@ -61,12 +61,12 @@ export function DeleteAppButton({
         placeholder={appName}
         autoFocus
       />
-      <label className="flex items-center gap-2 text-sm text-foreground/60 cursor-pointer select-none">
+      <label className="flex items-center gap-2 text-sm text-foreground-2 cursor-pointer select-none">
         <input
           type="checkbox"
           checked={deleteS3}
           onChange={(e) => setDeleteS3(e.target.checked)}
-          className="accent-red-600"
+          className="accent-error"
         />
         Also delete S3 objects
       </label>

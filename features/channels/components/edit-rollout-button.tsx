@@ -55,7 +55,7 @@ export function EditRolloutButton({
     return (
       <button
         onClick={() => setEditing(true)}
-        className="text-xs text-foreground/50 hover:text-foreground transition-colors cursor-pointer"
+        className="text-xs text-accent hover:text-accent-bright transition-colors cursor-pointer"
       >
         {currentPercent}%
       </button>

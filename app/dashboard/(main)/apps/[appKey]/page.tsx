@@ -96,7 +96,7 @@ export default async function AppDetailPage({
         <div className="flex items-center justify-between mt-2">
           <div>
             <h1 className="text-2xl font-bold">{app.name}</h1>
-            <p className="text-sm text-foreground/50">{app.appKey}</p>
+            <p className="text-sm text-foreground-2">{app.appKey}</p>
           </div>
           <DeleteAppButton appKey={appKey} appName={app.name} />
         </div>
@@ -105,13 +105,13 @@ export default async function AppDetailPage({
       <div className="flex gap-2 mb-6">
         <Link
           href={`/dashboard/apps/${appKey}/channels`}
-          className="px-3 py-1.5 text-sm border border-foreground/20 rounded-md hover:bg-foreground/5 transition-colors"
+          className="px-3 py-1.5 text-sm border border-white/10 rounded-lg hover:border-white/20 hover:bg-white/[0.04] transition-all"
         >
           Channels ({channelList.length})
         </Link>
         <Link
           href={`/dashboard/apps/${appKey}/rollbacks`}
-          className="px-3 py-1.5 text-sm border border-foreground/20 rounded-md hover:bg-foreground/5 transition-colors"
+          className="px-3 py-1.5 text-sm border border-white/10 rounded-lg hover:border-white/20 hover:bg-white/[0.04] transition-all"
         >
           Rollback History ({rollbackCount})
         </Link>
@@ -119,23 +119,23 @@ export default async function AppDetailPage({
 
       {runtimeVersions.length > 0 && (
         <div className="mb-6">
-          <h2 className="text-sm font-semibold text-foreground/50 uppercase tracking-wider mb-2">
+          <h2 className="text-xs font-semibold text-foreground-2 uppercase tracking-wider mb-2">
             Runtime Versions
           </h2>
           <div className="flex flex-wrap gap-2">
             {runtimeVersions.map((rv) => (
               <div
                 key={`${rv.version}-${rv.platform}`}
-                className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-foreground/[0.03] text-sm"
+                className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-surface-1 text-sm"
               >
                 {rv.hasChannel && (
-                  <span className="inline-block w-1.5 h-1.5 rounded-full bg-green-500" />
+                  <span className="inline-block w-1.5 h-1.5 rounded-full bg-success shadow-[0_0_6px_rgba(16,185,129,0.5)]" />
                 )}
                 <span className="font-mono text-xs">{rv.version}</span>
-                <span className="text-foreground/40 text-xs">
+                <span className="text-foreground-3 text-xs">
                   {rv.platform === "ios" ? "iOS" : "Android"}
                 </span>
-                <span className="text-foreground/30 text-xs">
+                <span className="text-foreground-3 text-xs">
                   {rv.count} update{rv.count !== 1 ? "s" : ""}
                 </span>
               </div>
@@ -162,10 +162,10 @@ export default async function AppDetailPage({
                 <Link
                   key={v}
                   href={`/dashboard/apps/${appKey}${qs ? `?${qs}` : ""}`}
-                  className={`px-2.5 py-1 text-xs rounded-md transition-colors ${
+                  className={`px-2.5 py-1 text-xs rounded-md transition-all ${
                     isActive
-                      ? "bg-foreground text-background font-medium"
-                      : "text-foreground/50 hover:bg-foreground/5"
+                      ? "bg-accent text-[#08090d] font-medium"
+                      : "text-foreground-2 hover:bg-white/[0.06]"
                   }`}
                 >
                   {v === "flat" ? "Flat" : "Grouped"}
@@ -185,10 +185,10 @@ export default async function AppDetailPage({
                 <Link
                   key={p}
                   href={`/dashboard/apps/${appKey}${qs ? `?${qs}` : ""}`}
-                  className={`px-2.5 py-1 text-xs rounded-md transition-colors ${
+                  className={`px-2.5 py-1 text-xs rounded-md transition-all ${
                     isActive
-                      ? "bg-foreground text-background font-medium"
-                      : "text-foreground/50 hover:bg-foreground/5"
+                      ? "bg-accent text-[#08090d] font-medium"
+                      : "text-foreground-2 hover:bg-white/[0.06]"
                   }`}
                 >
                   {p === "all" ? "All" : p === "ios" ? "iOS" : "Android"}
@@ -201,23 +201,25 @@ export default async function AppDetailPage({
 
       {filteredUpdates.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-12 text-center">
-          <svg
-            width="40"
-            height="40"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className="text-foreground/20 mb-3"
-          >
-            <polyline points="16 16 12 12 8 16" />
-            <line x1="12" y1="12" x2="12" y2="21" />
-            <path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3" />
-          </svg>
-          <p className="text-foreground/50 text-sm">No updates yet</p>
-          <p className="text-foreground/30 text-xs mt-1">
+          <div className="glass rounded-xl p-4 mb-3">
+            <svg
+              width="40"
+              height="40"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="text-foreground-3"
+            >
+              <polyline points="16 16 12 12 8 16" />
+              <line x1="12" y1="12" x2="12" y2="21" />
+              <path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3" />
+            </svg>
+          </div>
+          <p className="text-foreground-2 text-sm">No updates yet</p>
+          <p className="text-foreground-3 text-xs mt-1">
             Upload a bundle using the form above
           </p>
         </div>
@@ -255,24 +257,26 @@ function UpdateRow({
   return (
     <Link
       href={`/dashboard/apps/${appKey}/updates/${update.id}`}
-      className="flex items-center justify-between p-4 hover:bg-foreground/[0.03] transition-colors"
+      className="flex items-center justify-between p-4 hover:bg-white/[0.03] transition-colors"
     >
       <div className="flex items-center gap-3">
         <span
           className={`inline-block w-2 h-2 rounded-full ${
-            update.enabled ? "bg-green-500" : "bg-red-500"
+            update.enabled
+              ? "bg-success shadow-[0_0_6px_rgba(16,185,129,0.5)]"
+              : "bg-error"
           }`}
         />
         <div>
           <p className="text-sm font-mono">
             {update.id.slice(0, 8)}...
           </p>
-          <p className="text-xs text-foreground/50">
+          <p className="text-xs text-foreground-2">
             {update.platform} &middot; rv {update.runtimeVersion}
-            <span className="text-foreground/40 font-mono ml-1">
+            <span className="text-foreground-3 font-mono ml-1">
               {update.bundleHash.slice(0, 12)}
             </span>
-            <span className="text-foreground/40 ml-1">
+            <span className="text-foreground-3 ml-1">
               &middot; {formatBytes(update.bundleSize)}
             </span>
           </p>
@@ -283,14 +287,14 @@ function UpdateRow({
           {channels.map((ch) => (
             <span
               key={ch}
-              className="text-xs px-1.5 py-0.5 rounded bg-foreground/10"
+              className="text-xs px-1.5 py-0.5 rounded bg-accent/10 text-accent border border-accent/20"
             >
               {ch}
             </span>
           ))}
         </div>
         <p
-          className="text-xs text-foreground/40 mt-1"
+          className="text-xs text-foreground-3 mt-1"
           title={formatAbsolute(update.createdAt)}
         >
           {timeAgo(update.createdAt)}
@@ -321,10 +325,10 @@ function GroupedUpdates({
       {[...groups.entries()].map(([groupId, items]) => (
         <Card key={groupId}>
           <div className="flex items-center justify-between mb-2">
-            <p className="text-xs font-mono text-foreground/50">
+            <p className="text-xs font-mono text-foreground-2">
               Group {groupId.slice(0, 8)}...
             </p>
-            <p className="text-xs text-foreground/40">
+            <p className="text-xs text-foreground-3">
               rv {items[0].runtimeVersion}
             </p>
           </div>
@@ -333,18 +337,20 @@ function GroupedUpdates({
               <Link
                 key={update.id}
                 href={`/dashboard/apps/${appKey}/updates/${update.id}`}
-                className="flex items-center justify-between px-3 py-2 rounded hover:bg-foreground/[0.03] transition-colors"
+                className="flex items-center justify-between px-3 py-2 rounded hover:bg-white/[0.03] transition-colors"
               >
                 <div className="flex items-center gap-2">
                   <span
                     className={`inline-block w-1.5 h-1.5 rounded-full ${
-                      update.enabled ? "bg-green-500" : "bg-red-500"
+                      update.enabled
+                        ? "bg-success shadow-[0_0_6px_rgba(16,185,129,0.5)]"
+                        : "bg-error"
                     }`}
                   />
                   <span className="text-xs">
                     {update.platform === "ios" ? "iOS" : "Android"}
                   </span>
-                  <span className="text-xs text-foreground/40">
+                  <span className="text-xs text-foreground-3">
                     {formatBytes(update.bundleSize)}
                   </span>
                 </div>
@@ -352,13 +358,13 @@ function GroupedUpdates({
                   {(assignmentMap.get(update.id) ?? []).map((ch) => (
                     <span
                       key={ch}
-                      className="text-xs px-1.5 py-0.5 rounded bg-foreground/10"
+                      className="text-xs px-1.5 py-0.5 rounded bg-accent/10 text-accent border border-accent/20"
                     >
                       {ch}
                     </span>
                   ))}
                   <span
-                    className="text-xs text-foreground/40"
+                    className="text-xs text-foreground-3"
                     title={formatAbsolute(update.createdAt)}
                   >
                     {timeAgo(update.createdAt)}

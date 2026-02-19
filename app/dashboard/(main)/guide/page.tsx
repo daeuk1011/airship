@@ -88,7 +88,7 @@ export default function GuidePage() {
   return (
     <div className="p-8 max-w-3xl mx-auto">
       <h1 className="text-2xl font-bold mb-2">Docs</h1>
-      <p className="text-sm text-foreground/50 mb-8">
+      <p className="text-sm text-foreground-2 mb-8">
         Guides for operating the Airship OTA server
       </p>
       <div className="space-y-3">
@@ -96,16 +96,16 @@ export default function GuidePage() {
           <Link
             key={doc.slug}
             href={`/dashboard/guide/${doc.slug}`}
-            className="flex items-start gap-4 p-4 rounded-lg border border-foreground/10 hover:border-foreground/20 hover:bg-foreground/[0.02] transition-colors group"
+            className="flex items-start gap-4 p-4 rounded-xl glass hover:border-white/[0.12] transition-all group"
           >
-            <div className="mt-0.5 p-2 rounded-md bg-foreground/[0.04] text-foreground/40 group-hover:text-foreground/60 transition-colors shrink-0">
+            <div className="mt-0.5 p-2 rounded-lg bg-white/[0.04] text-foreground-3 group-hover:text-accent group-hover:bg-accent/10 transition-colors shrink-0">
               {doc.icon}
             </div>
             <div>
-              <p className="font-medium text-sm group-hover:text-foreground transition-colors">
+              <p className="font-medium text-sm group-hover:text-accent transition-colors">
                 {doc.title}
               </p>
-              <p className="text-xs text-foreground/50 mt-1 leading-relaxed">
+              <p className="text-xs text-foreground-2 mt-1 leading-relaxed">
                 {doc.description}
               </p>
             </div>
@@ -118,7 +118,7 @@ export default function GuidePage() {
               strokeWidth="2"
               strokeLinecap="round"
               strokeLinejoin="round"
-              className="ml-auto mt-1 text-foreground/20 group-hover:text-foreground/40 transition-colors shrink-0"
+              className="ml-auto mt-1 text-foreground-3 group-hover:text-foreground-2 transition-colors shrink-0"
             >
               <polyline points="9 18 15 12 9 6" />
             </svg>

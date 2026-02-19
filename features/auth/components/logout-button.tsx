@@ -15,7 +15,7 @@ export function LogoutButton() {
     <Button
       variant="ghost"
       onClick={handleLogout}
-      className="w-full text-left"
+      className="w-full text-left hover:text-error hover:bg-error/[0.06]"
     >
       Logout
     </Button>

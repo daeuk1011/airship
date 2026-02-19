@@ -61,22 +61,24 @@ export default async function RollbackHistoryPage({
 
       {enriched.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-12 text-center">
-          <svg
-            width="40"
-            height="40"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className="text-foreground/20 mb-3"
-          >
-            <polyline points="1 4 1 10 7 10" />
-            <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" />
-          </svg>
-          <p className="text-foreground/50 text-sm">No rollback history</p>
-          <p className="text-foreground/30 text-xs mt-1">
+          <div className="glass rounded-xl p-4 mb-3">
+            <svg
+              width="40"
+              height="40"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="text-foreground-3"
+            >
+              <polyline points="1 4 1 10 7 10" />
+              <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" />
+            </svg>
+          </div>
+          <p className="text-foreground-2 text-sm">No rollback history</p>
+          <p className="text-foreground-3 text-xs mt-1">
             Rollbacks will appear here when you revert an update
           </p>
         </div>
@@ -87,19 +89,19 @@ export default async function RollbackHistoryPage({
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
                   {rb.channel && (
-                    <span className="text-xs px-1.5 py-0.5 rounded bg-foreground/10">
+                    <span className="text-xs px-1.5 py-0.5 rounded bg-accent/10 text-accent border border-accent/20">
                       {rb.channel.name}
                     </span>
                   )}
                   {rb.fromUpdate && (
-                    <span className="text-xs text-foreground/50">
+                    <span className="text-xs text-foreground-2">
                       {rb.fromUpdate.platform} &middot; rv{" "}
                       {rb.fromUpdate.runtimeVersion}
                     </span>
                   )}
                 </div>
                 <span
-                  className="text-xs text-foreground/40"
+                  className="text-xs text-foreground-3"
                   title={formatAbsolute(rb.createdAt)}
                 >
                   {timeAgo(rb.createdAt)}
@@ -109,23 +111,23 @@ export default async function RollbackHistoryPage({
               <div className="flex items-center gap-2 text-sm">
                 <Link
                   href={`/dashboard/apps/${appKey}/updates/${rb.fromUpdateId}`}
-                  className="font-mono text-xs hover:underline"
+                  className="font-mono text-xs hover:text-accent transition-colors"
                 >
                   {rb.fromUpdateId.slice(0, 8)}...
                   {rb.fromUpdate && (
-                    <span className="text-foreground/40 ml-1">
+                    <span className="text-foreground-3 ml-1">
                       {rb.fromUpdate.bundleHash.slice(0, 12)}
                     </span>
                   )}
                 </Link>
-                <span className="text-foreground/30">&rarr;</span>
+                <span className="text-foreground-3">&rarr;</span>
                 <Link
                   href={`/dashboard/apps/${appKey}/updates/${rb.toUpdateId}`}
-                  className="font-mono text-xs hover:underline"
+                  className="font-mono text-xs hover:text-accent transition-colors"
                 >
                   {rb.toUpdateId.slice(0, 8)}...
                   {rb.toUpdate && (
-                    <span className="text-foreground/40 ml-1">
+                    <span className="text-foreground-3 ml-1">
                       {rb.toUpdate.bundleHash.slice(0, 12)}
                     </span>
                   )}
@@ -133,7 +135,7 @@ export default async function RollbackHistoryPage({
               </div>
 
               {rb.reason && (
-                <p className="text-xs text-foreground/50 mt-2">{rb.reason}</p>
+                <p className="text-xs text-foreground-2 mt-2">{rb.reason}</p>
               )}
             </div>
           ))}

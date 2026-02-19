@@ -100,7 +100,7 @@ export default async function UpdateDetailPage({
 
       <div className="grid grid-cols-2 gap-6">
         <Card>
-          <h2 className="text-sm font-semibold text-foreground/50 mb-3 uppercase tracking-wider">
+          <h2 className="text-xs font-semibold text-foreground-2 mb-3 uppercase tracking-wider">
             Info
           </h2>
           <dl className="space-y-2 text-sm">
@@ -118,25 +118,25 @@ export default async function UpdateDetailPage({
               value={formatBytes(update.bundleSize)}
             />
             <div className="flex justify-between">
-              <dt className="text-foreground/50">Created</dt>
+              <dt className="text-foreground-2">Created</dt>
               <dd title={formatAbsolute(update.createdAt)}>
                 {timeAgo(update.createdAt)}
               </dd>
             </div>
             <div className="flex justify-between">
-              <dt className="text-foreground/50">Channels</dt>
+              <dt className="text-foreground-2">Channels</dt>
               <dd className="flex gap-1.5 flex-wrap justify-end">
                 {assignedChannels.length > 0 ? (
                   assignedChannels.map((ch) => (
                     <span
                       key={ch}
-                      className="inline-flex items-center rounded-full bg-foreground/10 px-2 py-0.5 text-xs font-medium"
+                      className="inline-flex items-center rounded-full bg-accent/10 text-accent border border-accent/20 px-2 py-0.5 text-xs font-medium"
                     >
                       {ch}
                     </span>
                   ))
                 ) : (
-                  <span className="text-foreground/40 text-xs">None</span>
+                  <span className="text-foreground-3 text-xs">None</span>
                 )}
               </dd>
             </div>
@@ -144,7 +144,7 @@ export default async function UpdateDetailPage({
         </Card>
 
         <Card>
-          <h2 className="text-sm font-semibold text-foreground/50 mb-3 uppercase tracking-wider">
+          <h2 className="text-xs font-semibold text-foreground-2 mb-3 uppercase tracking-wider">
             Actions
           </h2>
           <div className="space-y-3">
@@ -173,21 +173,21 @@ export default async function UpdateDetailPage({
           Assets ({assetList.length})
         </h2>
         {assetList.length === 0 ? (
-          <p className="text-foreground/50 text-sm">No assets.</p>
+          <p className="text-foreground-2 text-sm">No assets.</p>
         ) : (
           <CardList>
             {assetList.map((asset) => (
               <div key={asset.id} className="p-3 text-sm">
                 <div className="flex items-center justify-between">
                   <span className="font-mono text-xs">{asset.key}</span>
-                  <span className="text-foreground/50 text-xs">
+                  <span className="text-foreground-2 text-xs">
                     {asset.fileExtension} &middot;{" "}
                     {asset.size
                       ? `${(asset.size / 1024).toFixed(1)} KB`
                       : "N/A"}
                   </span>
                 </div>
-                <p className="text-xs text-foreground/40 mt-0.5 font-mono truncate">
+                <p className="text-xs text-foreground-3 mt-0.5 font-mono truncate">
                   {asset.hash}
                 </p>
               </div>
@@ -198,10 +198,10 @@ export default async function UpdateDetailPage({
 
       <div className="mt-6">
         <h2 className="text-lg font-semibold mb-3">Manifest Preview</h2>
-        <pre className="bg-foreground/5 rounded-lg p-4 text-xs overflow-auto max-h-80 font-mono">
+        <pre className="bg-[#0d1117] border border-white/[0.06] rounded-lg p-4 text-xs overflow-auto max-h-80 font-mono">
           {manifestLines.map((line, i) => (
             <div key={i} className="flex">
-              <span className="inline-block w-8 text-right mr-4 text-foreground/25 select-none">
+              <span className="inline-block w-8 text-right mr-4 text-foreground-3 select-none">
                 {i + 1}
               </span>
               <span>{line}</span>
@@ -224,7 +224,7 @@ function Row({
 }) {
   return (
     <div className="flex justify-between">
-      <dt className="text-foreground/50">{label}</dt>
+      <dt className="text-foreground-2">{label}</dt>
       <dd className={mono ? "font-mono text-xs" : ""}>{value}</dd>
     </div>
   );
@@ -241,7 +241,7 @@ function CopyRow({
 }) {
   return (
     <div className="flex justify-between items-center">
-      <dt className="text-foreground/50">{label}</dt>
+      <dt className="text-foreground-2">{label}</dt>
       <dd className="flex items-center gap-1">
         <span className={mono ? "font-mono text-xs truncate max-w-48" : ""}>
           {value}

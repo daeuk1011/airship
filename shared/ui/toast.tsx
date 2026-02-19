@@ -46,10 +46,16 @@ const icons: Record<ToastType, ReactNode> = {
   ),
 };
 
-const styles: Record<ToastType, string> = {
-  success: "border-success/30 text-success",
-  error: "border-error/30 text-error",
-  info: "border-info/30 text-info",
+const borderColors: Record<ToastType, string> = {
+  success: "border-l-success",
+  error: "border-l-error",
+  info: "border-l-info",
+};
+
+const iconColors: Record<ToastType, string> = {
+  success: "text-success",
+  error: "text-error",
+  info: "text-info",
 };
 
 export function ToastProvider({ children }: { children: ReactNode }) {
@@ -74,13 +80,13 @@ export function ToastProvider({ children }: { children: ReactNode }) {
         {toasts.map((t) => (
           <div
             key={t.id}
-            className={`animate-slide-in flex items-center gap-2 rounded-lg border bg-background px-4 py-3 text-sm shadow-lg ${styles[t.type]}`}
+            className={`animate-slide-in flex items-center gap-2 rounded-lg border border-white/[0.08] border-l-2 ${borderColors[t.type]} bg-[#0d1117]/95 backdrop-blur-xl px-4 py-3 text-sm shadow-lg`}
           >
-            {icons[t.type]}
+            <span className={iconColors[t.type]}>{icons[t.type]}</span>
             <span className="text-foreground">{t.message}</span>
             <button
               onClick={() => removeToast(t.id)}
-              className="ml-2 text-foreground/30 hover:text-foreground/60 cursor-pointer"
+              className="ml-2 text-foreground-3 hover:text-foreground-2 cursor-pointer transition-colors"
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <line x1="18" y1="6" x2="6" y2="18" />
