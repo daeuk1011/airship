@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 const nonEmpty = z.string().trim().min(1);
+const platform = z.enum(["ios", "android"]);
 const noPathTraversal = (value: string) =>
   !value.includes("..") &&
   !value.includes("\\") &&
@@ -32,7 +33,7 @@ export const presignAssetSchema = z.object({
 
 export const presignUploadSchema = z.object({
   runtimeVersion: nonEmpty,
-  platform: nonEmpty,
+  platform,
   bundleFilename: safeFilename,
   assets: z.array(presignAssetSchema).default([]),
 });
@@ -55,11 +56,20 @@ export const commitAssetSchema = z.object({
 export const commitUploadSchema = z.object({
   updateGroupId: z.string().uuid(),
   runtimeVersion: nonEmpty,
-  platform: nonEmpty,
+  platform,
   channelName: nonEmpty.optional(),
   bundle: commitBundleSchema,
   assets: z.array(commitAssetSchema).default([]),
 });
 
+export const uploadPreflightSchema = z.object({
+  platform,
+  runtimeVersion: nonEmpty.optional(),
+  channelName: nonEmpty.optional(),
+  bundleFilename: safeFilename.optional(),
+  bundleSize: z.number().finite().min(0).optional(),
+});
+
 export type PresignUploadInput = z.infer<typeof presignUploadSchema>;
 export type CommitUploadInput = z.infer<typeof commitUploadSchema>;
+export type UploadPreflightInput = z.infer<typeof uploadPreflightSchema>;

@@ -1,6 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/shared/libs/db";
-import { apps, channels, updates, channelAssignments, rollbackHistory } from "@/shared/libs/db/schema";
+import {
+  apps,
+  channels,
+  updates,
+  assets,
+  channelAssignments,
+  rollbackHistory,
+} from "@/shared/libs/db/schema";
 import { eq, and } from "drizzle-orm";
 import { verifyAuth } from "@/shared/libs/auth";
 import { errorResponse, invalidRequestFromZod } from "@/shared/libs/http/error";
@@ -69,42 +76,63 @@ export async function POST(
   const fromUpdateId = assignment.updateId;
   const now = Date.now();
 
-  // Republish: create a new update with the same bundle but new ID/timestamp
-  // so expo-updates clients treat it as a newer update
+  const targetAssets = db
+    .select()
+    .from(assets)
+    .where(eq(assets.updateId, targetUpdate.id))
+    .all();
+
+  // Republish with copied assets in one transaction so assignment never points
+  // to a partially created update.
   const newUpdateId = uuidv4();
-  db.insert(updates)
-    .values({
-      id: newUpdateId,
-      appId: app.id,
-      updateGroupId: uuidv4(),
-      runtimeVersion: targetUpdate.runtimeVersion,
-      platform: targetUpdate.platform,
-      bundleS3Key: targetUpdate.bundleS3Key,
-      bundleHash: targetUpdate.bundleHash,
-      bundleSize: targetUpdate.bundleSize,
-      enabled: 1,
-      createdAt: now,
-    })
-    .run();
+  db.transaction((tx) => {
+    tx.insert(updates)
+      .values({
+        id: newUpdateId,
+        appId: app.id,
+        updateGroupId: uuidv4(),
+        runtimeVersion: targetUpdate.runtimeVersion,
+        platform: targetUpdate.platform,
+        bundleS3Key: targetUpdate.bundleS3Key,
+        bundleHash: targetUpdate.bundleHash,
+        bundleSize: targetUpdate.bundleSize,
+        enabled: 1,
+        createdAt: now,
+      })
+      .run();
 
-  // Update channel assignment to point to the republished update
-  db.update(channelAssignments)
-    .set({ updateId: newUpdateId, updatedAt: now })
-    .where(eq(channelAssignments.id, assignment.id))
-    .run();
+    for (const asset of targetAssets) {
+      tx.insert(assets)
+        .values({
+          id: uuidv4(),
+          updateId: newUpdateId,
+          s3Key: asset.s3Key,
+          hash: asset.hash,
+          key: asset.key,
+          fileExtension: asset.fileExtension,
+          contentType: asset.contentType,
+          size: asset.size,
+        })
+        .run();
+    }
 
-  // Record rollback history
-  db.insert(rollbackHistory)
-    .values({
-      id: uuidv4(),
-      appId: app.id,
-      channelId: channel.id,
-      fromUpdateId,
-      toUpdateId: newUpdateId,
-      reason: reason ?? null,
-      createdAt: now,
-    })
-    .run();
+    tx.update(channelAssignments)
+      .set({ updateId: newUpdateId, updatedAt: now })
+      .where(eq(channelAssignments.id, assignment.id))
+      .run();
+
+    tx.insert(rollbackHistory)
+      .values({
+        id: uuidv4(),
+        appId: app.id,
+        channelId: channel.id,
+        fromUpdateId,
+        toUpdateId: newUpdateId,
+        reason: reason ?? null,
+        createdAt: now,
+      })
+      .run();
+  });
 
   return NextResponse.json({
     rolledBack: true,
@@ -113,5 +141,6 @@ export async function POST(
     republishedFrom: targetUpdateId,
     channelName,
     runtimeVersion: targetUpdate.runtimeVersion,
+    copiedAssetCount: targetAssets.length,
   });
 }
