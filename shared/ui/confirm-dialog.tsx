@@ -49,7 +49,7 @@ export function ConfirmDialog({
       {children(() => setIsOpen(true))}
       <dialog
         ref={dialogRef}
-        className="rounded-xl border border-white/[0.08] bg-[#0d1117]/95 backdrop-blur-xl p-0 shadow-2xl backdrop:bg-black/60 backdrop:backdrop-blur-sm max-w-sm w-full animate-scale-in"
+        className="m-auto rounded-xl border border-white/[0.08] bg-[#0d1117]/95 backdrop-blur-xl p-0 shadow-2xl backdrop:bg-black/60 backdrop:backdrop-blur-sm max-w-sm w-full animate-scale-in"
         onClick={(e) => {
           if (e.target === dialogRef.current) setIsOpen(false);
         }}
