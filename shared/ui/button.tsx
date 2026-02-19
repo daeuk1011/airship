@@ -3,7 +3,7 @@ import { Spinner } from "@/shared/ui/spinner";
 
 const variants = {
   primary:
-    "bg-accent text-[#08090d] font-medium hover:bg-accent-bright hover:shadow-[0_0_20px_rgba(6,182,212,0.3)] disabled:opacity-50",
+    "bg-accent text-[#08090d] font-medium hover:bg-accent-bright hover:shadow-[0_0_20px_rgba(255,255,255,0.2)] disabled:opacity-50",
   destructive:
     "bg-error/10 text-error border border-error/30 hover:bg-error/20 disabled:opacity-50",
   outline:

@@ -5,9 +5,9 @@
   --foreground: #f0f4f8;
   --foreground-2: #8b95a5;
   --foreground-3: #4a5568;
-  --accent: #06b6d4;
-  --accent-bright: #22d3ee;
-  --accent-glow: rgba(6, 182, 212, 0.15);
+  --accent: #ededed;
+  --accent-bright: #ffffff;
+  --accent-glow: rgba(255, 255, 255, 0.1);
   --surface-1: rgba(255, 255, 255, 0.03);
   --surface-2: rgba(255, 255, 255, 0.06);
   --surface-3: rgba(255, 255, 255, 0.09);
@@ -82,10 +82,10 @@
 
 @keyframes glow {
   from {
-    box-shadow: 0 0 8px rgba(6, 182, 212, 0.15);
+    box-shadow: 0 0 8px rgba(255, 255, 255, 0.08);
   }
   to {
-    box-shadow: 0 0 16px rgba(6, 182, 212, 0.25);
+    box-shadow: 0 0 16px rgba(255, 255, 255, 0.15);
   }
 }
 
