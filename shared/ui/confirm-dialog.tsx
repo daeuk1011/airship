@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useCallback, type ReactNode } from "react";
+import { useState, useEffect, useRef, type ReactNode } from "react";
 import { Button } from "@/shared/ui/button";
 
 const variants = {
@@ -23,24 +23,35 @@ export function ConfirmDialog({
   onConfirm: () => void;
   children: (open: () => void) => ReactNode;
 }) {
+  const [isOpen, setIsOpen] = useState(false);
   const dialogRef = useRef<HTMLDialogElement>(null);
 
-  const open = useCallback(() => {
-    dialogRef.current?.showModal();
-  }, []);
+  useEffect(() => {
+    const el = dialogRef.current;
+    if (!el) return;
+    if (isOpen) {
+      el.showModal();
+    } else {
+      el.close();
+    }
+  }, [isOpen]);
 
-  const close = useCallback(() => {
-    dialogRef.current?.close();
+  useEffect(() => {
+    const el = dialogRef.current;
+    if (!el) return;
+    const handleClose = () => setIsOpen(false);
+    el.addEventListener("close", handleClose);
+    return () => el.removeEventListener("close", handleClose);
   }, []);
 
   return (
     <>
-      {children(open)}
+      {children(() => setIsOpen(true))}
       <dialog
         ref={dialogRef}
         className="rounded-xl border border-foreground/10 bg-background p-0 shadow-xl backdrop:bg-black/50 max-w-sm w-full"
         onClick={(e) => {
-          if (e.target === dialogRef.current) close();
+          if (e.target === dialogRef.current) setIsOpen(false);
         }}
       >
         <div className="p-6">
@@ -49,14 +60,14 @@ export function ConfirmDialog({
             <p className="text-sm text-foreground/60 mt-2">{description}</p>
           )}
           <div className="flex justify-end gap-2 mt-6">
-            <Button variant="outline" size="sm" onClick={close}>
+            <Button variant="outline" size="sm" onClick={() => setIsOpen(false)}>
               Cancel
             </Button>
             <Button
               variant={variants[variant]}
               size="sm"
               onClick={() => {
-                close();
+                setIsOpen(false);
                 onConfirm();
               }}
             >
