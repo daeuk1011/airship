@@ -1,4 +1,5 @@
 import { type ButtonHTMLAttributes } from "react";
+import { Spinner } from "@/shared/ui/spinner";
 
 const variants = {
   primary:
@@ -17,18 +18,26 @@ const sizes = {
 type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
   variant?: keyof typeof variants;
   size?: "sm" | "md";
+  loading?: boolean;
 };
 
 export function Button({
   variant = "primary",
   size = "md",
+  loading,
   className = "",
+  disabled,
+  children,
   ...props
 }: ButtonProps) {
   return (
     <button
-      className={`${sizes[size]} ${variants[variant]} transition-colors ${className}`}
+      className={`inline-flex items-center justify-center gap-2 ${sizes[size]} ${variants[variant]} transition-colors ${className}`}
+      disabled={disabled || loading}
       {...props}
-    />
+    >
+      {loading && <Spinner size="sm" />}
+      {children}
+    </button>
   );
 }

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { LogoutButton } from "@/features/auth/components/logout-button";
 import { Logo } from "@/shared/ui/logo";
 import { NavLinks } from "./nav-links";
+import { ToastProvider } from "@/shared/ui/toast";
 
 export default function MainDashboardLayout({
   children,
@@ -27,7 +28,9 @@ export default function MainDashboardLayout({
           <LogoutButton />
         </div>
       </aside>
-      <main className="flex-1 overflow-y-auto">{children}</main>
+      <main className="flex-1 overflow-y-auto">
+          <ToastProvider>{children}</ToastProvider>
+        </main>
     </div>
   );
 }
