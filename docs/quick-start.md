@@ -48,9 +48,9 @@ export AIRSHIP_RUNTIME_VERSION="1.0.0"
 
 npx expo export --platform ios --output-dir dist
 
-BUNDLE_PATH="$(ls -1 dist/bundles/ios-*.js 2>/dev/null | head -n 1)"
+BUNDLE_PATH="$(find dist -name 'index-*.hbc' -path '*/ios/*' 2>/dev/null | head -n 1)"
 if [ -z "$BUNDLE_PATH" ]; then
-  echo "iOS bundle not found under dist/bundles"
+  echo "iOS bundle not found under dist"
   exit 1
 fi
 

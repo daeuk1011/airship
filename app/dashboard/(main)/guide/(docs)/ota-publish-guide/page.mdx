@@ -38,7 +38,7 @@ export AIRSHIP_APP_KEY="my-app"
 export AIRSHIP_RUNTIME_VERSION="1.0.0"
 
 npx expo export --platform ios --output-dir dist
-BUNDLE_PATH="$(ls -1 dist/bundles/ios-*.js 2>/dev/null | head -n 1)"
+BUNDLE_PATH="$(find dist -name 'index-*.hbc' -path '*/ios/*' 2>/dev/null | head -n 1)"
 
 ./scripts/publish-update.sh \
   --app-key "$AIRSHIP_APP_KEY" \
@@ -64,7 +64,7 @@ Then promote `staging -> production` from dashboard.
 | `--app-key` | `my-app` | Existing app key |
 | `--runtime-version` | `1.0.0` | Must match client runtime |
 | `--platform` | `ios` / `android` | One platform per publish |
-| `--bundle` | `dist/bundles/...js` | Exported bundle path |
+| `--bundle` | `dist/_expo/static/js/ios/index-*.hbc` | Exported bundle path |
 
 ---
 
@@ -110,11 +110,12 @@ jobs:
           AIRSHIP_TOKEN: ${{ secrets.AIRSHIP_TOKEN }}
         run: |
           export AIRSHIP_ADMIN_SECRET="$AIRSHIP_TOKEN"
+          BUNDLE_PATH="$(find dist -name 'index-*.hbc' -path '*/${{ matrix.platform }}/*' 2>/dev/null | head -n 1)"
           ./publish-update.sh \
             --app-key my-app \
             --runtime-version 1.0.0 \
             --platform ${{ matrix.platform }} \
-            --bundle dist/bundles/${{ matrix.platform }}.js
+            --bundle "$BUNDLE_PATH"
 ```
 
 ---
