@@ -58,6 +58,8 @@ export const commitUploadSchema = z.object({
   runtimeVersion: nonEmpty,
   platform,
   channelName: nonEmpty.optional(),
+  commitHash: z.string().regex(/^[a-f0-9]{7,40}$/).optional(),
+  commitMessage: z.string().max(500).optional(),
   bundle: commitBundleSchema,
   assets: z.array(commitAssetSchema).default([]),
 });

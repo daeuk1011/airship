@@ -35,6 +35,8 @@ export const updates = sqliteTable(
     bundleS3Key: text("bundle_s3_key").notNull(),
     bundleHash: text("bundle_hash").notNull(),
     bundleSize: integer("bundle_size"),
+    commitHash: text("commit_hash"),
+    commitMessage: text("commit_message"),
     enabled: integer("enabled").notNull().default(1),
     createdAt: integer("created_at").notNull(),
   },

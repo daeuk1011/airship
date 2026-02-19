@@ -39,6 +39,8 @@ export async function POST(
     runtimeVersion,
     platform,
     channelName,
+    commitHash,
+    commitMessage,
     bundle,
     assets: assetList,
   } = parsed.data;
@@ -100,6 +102,8 @@ export async function POST(
         bundleS3Key: bundle.s3Key,
         bundleHash: bundle.hash,
         bundleSize: bundle.size ?? null,
+        commitHash: commitHash ?? null,
+        commitMessage: commitMessage ?? null,
         createdAt: now,
       })
       .run();

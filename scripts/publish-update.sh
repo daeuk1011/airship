@@ -20,6 +20,8 @@ Required:
 
 Optional:
   --channel NAME        Channel name (default: staging)
+  --commit-hash HASH    Git commit hash (7-40 hex chars)
+  --commit-message MSG  Git commit message (max 500 chars)
   --allow-production-channel
                        Allow direct publish to production channel
   --help                Show this help
@@ -54,6 +56,8 @@ RUNTIME_VERSION=""
 PLATFORM=""
 BUNDLE=""
 CHANNEL="staging"
+COMMIT_HASH=""
+COMMIT_MESSAGE=""
 ALLOW_PRODUCTION_CHANNEL=0
 
 # Parse args
@@ -65,6 +69,8 @@ while [[ $# -gt 0 ]]; do
     --platform) PLATFORM="$2"; shift 2 ;;
     --bundle) BUNDLE="$2"; shift 2 ;;
     --channel) CHANNEL="$2"; shift 2 ;;
+    --commit-hash) COMMIT_HASH="$2"; shift 2 ;;
+    --commit-message) COMMIT_MESSAGE="$2"; shift 2 ;;
     --allow-production-channel) ALLOW_PRODUCTION_CHANNEL=1; shift 1 ;;
     --help) usage ;;
     *) echo "Error: Unknown option $1"; exit 1 ;;
@@ -185,27 +191,36 @@ echo "    Upload complete (HTTP $HTTP_STATUS)"
 
 # Step 3: Commit
 echo "==> Step 3/3: Committing update..."
+
+COMMIT_JSON=$(jq -n \
+  --arg ugid "$UPDATE_GROUP_ID" \
+  --arg rv "$RUNTIME_VERSION" \
+  --arg p "$PLATFORM" \
+  --arg ch "$CHANNEL" \
+  --arg s3key "$BUNDLE_S3_KEY" \
+  --arg hash "$BUNDLE_HASH" \
+  --argjson size "$BUNDLE_SIZE" \
+  '{
+    updateGroupId: $ugid,
+    runtimeVersion: $rv,
+    platform: $p,
+    channelName: $ch,
+    bundle: { s3Key: $s3key, hash: $hash, size: $size },
+    assets: []
+  }')
+
+if [[ -n "$COMMIT_HASH" ]]; then
+  COMMIT_JSON=$(echo "$COMMIT_JSON" | jq --arg ch "$COMMIT_HASH" '. + {commitHash: $ch}')
+fi
+if [[ -n "$COMMIT_MESSAGE" ]]; then
+  COMMIT_JSON=$(echo "$COMMIT_JSON" | jq --arg cm "$COMMIT_MESSAGE" '. + {commitMessage: $cm}')
+fi
+
 COMMIT_RESPONSE=$(curl -sf \
   -X POST \
   -H "$AUTH_HEADER" \
   -H "Content-Type: application/json" \
-  -d "$(jq -n \
-    --arg ugid "$UPDATE_GROUP_ID" \
-    --arg rv "$RUNTIME_VERSION" \
-    --arg p "$PLATFORM" \
-    --arg ch "$CHANNEL" \
-    --arg s3key "$BUNDLE_S3_KEY" \
-    --arg hash "$BUNDLE_HASH" \
-    --argjson size "$BUNDLE_SIZE" \
-    '{
-      updateGroupId: $ugid,
-      runtimeVersion: $rv,
-      platform: $p,
-      channelName: $ch,
-      bundle: { s3Key: $s3key, hash: $hash, size: $size },
-      assets: []
-    }'
-  )" \
+  -d "$COMMIT_JSON" \
   "${SERVER}/api/apps/${APP_KEY}/uploads/commit") || {
   echo "Error: Commit request failed"
   exit 1

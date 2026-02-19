@@ -117,6 +117,17 @@ export default async function UpdateDetailPage({
               label="Bundle Size"
               value={formatBytes(update.bundleSize)}
             />
+            {update.commitHash && (
+              <CopyRow
+                label="Commit"
+                value={update.commitHash}
+                display={update.commitHash.slice(0, 8)}
+                mono
+              />
+            )}
+            {update.commitMessage && (
+              <Row label="Commit Message" value={update.commitMessage} />
+            )}
             <div className="flex justify-between">
               <dt className="text-foreground-2">Created</dt>
               <dd title={formatAbsolute(update.createdAt)}>
@@ -233,10 +244,12 @@ function Row({
 function CopyRow({
   label,
   value,
+  display,
   mono,
 }: {
   label: string;
   value: string;
+  display?: string;
   mono?: boolean;
 }) {
   return (
@@ -244,7 +257,7 @@ function CopyRow({
       <dt className="text-foreground-2">{label}</dt>
       <dd className="flex items-center gap-1">
         <span className={mono ? "font-mono text-xs truncate max-w-48" : ""}>
-          {value}
+          {display ?? value}
         </span>
         <CopyButton text={value} />
       </dd>

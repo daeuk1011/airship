@@ -250,7 +250,7 @@ function UpdateRow({
   appKey,
   channels,
 }: {
-  update: { id: string; platform: string; runtimeVersion: string; bundleHash: string; bundleSize: number | null; enabled: number; createdAt: number };
+  update: { id: string; platform: string; runtimeVersion: string; bundleHash: string; bundleSize: number | null; commitHash: string | null; enabled: number; createdAt: number };
   appKey: string;
   channels: string[];
 }) {
@@ -273,6 +273,11 @@ function UpdateRow({
           </p>
           <p className="text-xs text-foreground-2">
             {update.platform} &middot; rv {update.runtimeVersion}
+            {update.commitHash && (
+              <span className="text-foreground-3 font-mono ml-1">
+                {update.commitHash.slice(0, 7)}
+              </span>
+            )}
             <span className="text-foreground-3 font-mono ml-1">
               {update.bundleHash.slice(0, 12)}
             </span>
@@ -309,7 +314,7 @@ function GroupedUpdates({
   appKey,
   assignmentMap,
 }: {
-  updates: { id: string; updateGroupId: string; platform: string; runtimeVersion: string; bundleHash: string; bundleSize: number | null; enabled: number; createdAt: number }[];
+  updates: { id: string; updateGroupId: string; platform: string; runtimeVersion: string; bundleHash: string; bundleSize: number | null; commitHash: string | null; enabled: number; createdAt: number }[];
   appKey: string;
   assignmentMap: Map<string, string[]>;
 }) {
