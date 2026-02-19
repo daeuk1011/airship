@@ -14,6 +14,7 @@ type UploadStep =
   | "presigning"
   | "uploading"
   | "committing"
+  | "promoting"
   | "done"
   | "error";
 type PreflightCheck = {
@@ -39,6 +40,11 @@ type UploadResult = {
   platform: Platform;
   updateId: string;
 };
+type PromotionResult = {
+  platform: Platform;
+  updateId: string;
+  toChannel: string;
+};
 
 const STEP_LABELS: Record<UploadStep, string> = {
   idle: "",
@@ -46,6 +52,7 @@ const STEP_LABELS: Record<UploadStep, string> = {
   presigning: "Getting upload URL...",
   uploading: "Uploading bundle to S3...",
   committing: "Committing update...",
+  promoting: "Promoting update...",
   done: "Upload complete!",
   error: "Upload failed",
 };
@@ -73,6 +80,9 @@ export function UploadUpdateForm({ appKey }: { appKey: string }) {
   const [platformMode, setPlatformMode] = useState<PlatformMode>("ios");
   const [runtimeVersion, setRuntimeVersion] = useState("1.0.0");
   const [channelName, setChannelName] = useState("staging");
+  const [autoPromoteEnabled, setAutoPromoteEnabled] = useState(false);
+  const [promoteToChannel, setPromoteToChannel] = useState("production");
+  const [promoteRollout, setPromoteRollout] = useState("100");
   const [availableChannels, setAvailableChannels] = useState<string[]>([]);
   const [preflightChecks, setPreflightChecks] =
     useState<PreflightCheckWithPlatform[]>([]);
@@ -80,6 +90,9 @@ export function UploadUpdateForm({ appKey }: { appKey: string }) {
   const [stepDetail, setStepDetail] = useState("");
   const [error, setError] = useState("");
   const [results, setResults] = useState<UploadResult[]>([]);
+  const [promotionResults, setPromotionResults] = useState<PromotionResult[]>(
+    []
+  );
 
   const isLoading = step !== "idle" && step !== "done" && step !== "error";
 
@@ -279,11 +292,65 @@ export function UploadUpdateForm({ appKey }: { appKey: string }) {
     return { platform: target.platform, updateId: result.updateId };
   }
 
+  async function promoteTarget(uploaded: UploadResult): Promise<PromotionResult> {
+    const platformText = platformLabel(uploaded.platform);
+    const fromChannel = channelName.trim();
+    const toChannel = promoteToChannel.trim();
+    const rolloutPercent = Number(promoteRollout);
+
+    if (!fromChannel) {
+      throw new Error("Source channel is required for promotion");
+    }
+    if (!toChannel) {
+      throw new Error("Target channel is required for promotion");
+    }
+    if (fromChannel === toChannel) {
+      throw new Error("Source and target channels must be different");
+    }
+    if (Number.isNaN(rolloutPercent) || rolloutPercent < 0 || rolloutPercent > 100) {
+      throw new Error("Promotion rollout must be between 0 and 100");
+    }
+
+    setStep("promoting");
+    setStepDetail(`[${platformText}] Promoting to ${toChannel}...`);
+
+    const promoteRes = await fetch(
+      `/api/apps/${appKey}/updates/${uploaded.updateId}/promote`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          fromChannel,
+          toChannel,
+          rolloutPercent,
+        }),
+      }
+    );
+
+    if (!promoteRes.ok) {
+      const data = await promoteRes.json().catch(() => null);
+      throw new Error(
+        `[${platformText}] ${data?.error ?? `Promote failed (${promoteRes.status})`}`
+      );
+    }
+
+    return {
+      platform: uploaded.platform,
+      updateId: uploaded.updateId,
+      toChannel,
+    };
+  }
+
   async function handleCheck() {
     setError("");
 
     try {
       const targets = getTargets();
+
+      if (autoPromoteEnabled && channelName.trim() === promoteToChannel.trim()) {
+        throw new Error("Auto promotion requires different source and target channels");
+      }
+
       setStep("preflight");
       setStepDetail(STEP_LABELS.preflight);
       await runPreflight(targets);
@@ -299,11 +366,17 @@ export function UploadUpdateForm({ appKey }: { appKey: string }) {
   async function handleUpload() {
     setError("");
     setResults([]);
+    setPromotionResults([]);
 
     const completed: UploadResult[] = [];
+    const promoted: PromotionResult[] = [];
 
     try {
       const targets = getTargets();
+
+      if (autoPromoteEnabled && channelName.trim() === promoteToChannel.trim()) {
+        throw new Error("Auto promotion requires different source and target channels");
+      }
 
       setStep("preflight");
       setStepDetail(STEP_LABELS.preflight);
@@ -313,6 +386,12 @@ export function UploadUpdateForm({ appKey }: { appKey: string }) {
         const uploaded = await publishTarget(target);
         completed.push(uploaded);
         setResults([...completed]);
+
+        if (autoPromoteEnabled) {
+          const promotedItem = await promoteTarget(uploaded);
+          promoted.push(promotedItem);
+          setPromotionResults([...promoted]);
+        }
       }
 
       setStep("done");
@@ -323,11 +402,19 @@ export function UploadUpdateForm({ appKey }: { appKey: string }) {
       setStepDetail("");
       const message = e instanceof Error ? e.message : String(e);
 
-      if (completed.length > 0) {
+      if (completed.length > 0 || promoted.length > 0) {
         const doneText = completed
           .map((item) => `${platformLabel(item.platform)} ${item.updateId.slice(0, 8)}...`)
           .join(", ");
-        setError(`${message} (completed: ${doneText})`);
+        const promotedText = promoted
+          .map((item) => `${platformLabel(item.platform)} -> ${item.toChannel}`)
+          .join(", ");
+
+        const parts = [message];
+        if (doneText) parts.push(`uploaded: ${doneText}`);
+        if (promotedText) parts.push(`promoted: ${promotedText}`);
+
+        setError(parts.join(" | "));
       } else {
         setError(message);
       }
@@ -339,7 +426,11 @@ export function UploadUpdateForm({ appKey }: { appKey: string }) {
     setStepDetail("");
     setError("");
     setResults([]);
+    setPromotionResults([]);
     setPreflightChecks([]);
+    setAutoPromoteEnabled(false);
+    setPromoteToChannel("production");
+    setPromoteRollout("100");
     runtimeEditedRef.current = false;
     channelEditedRef.current = false;
 
@@ -423,6 +514,51 @@ export function UploadUpdateForm({ appKey }: { appKey: string }) {
           )}
         </div>
 
+        <div className="rounded-md border border-white/10 bg-white/[0.03] p-3 space-y-2">
+          <label className="inline-flex items-center gap-2 text-xs text-foreground-2">
+            <input
+              type="checkbox"
+              checked={autoPromoteEnabled}
+              onChange={(e) => setAutoPromoteEnabled(e.target.checked)}
+              disabled={isLoading}
+              className="accent-accent"
+            />
+            Auto promote after upload (default: OFF)
+          </label>
+
+          {autoPromoteEnabled && (
+            <div className="flex items-center gap-2 flex-wrap">
+              <Input
+                inputSize="sm"
+                placeholder="Target channel"
+                value={promoteToChannel}
+                onChange={(e) => setPromoteToChannel(e.target.value)}
+                list={`promote-channel-options-${appKey}`}
+                disabled={isLoading}
+                className="w-32"
+              />
+              <datalist id={`promote-channel-options-${appKey}`}>
+                {availableChannels.map((channel) => (
+                  <option key={channel} value={channel} />
+                ))}
+                <option value="production" />
+              </datalist>
+
+              <Input
+                inputSize="sm"
+                type="number"
+                min="0"
+                max="100"
+                value={promoteRollout}
+                onChange={(e) => setPromoteRollout(e.target.value)}
+                disabled={isLoading}
+                className="w-20"
+              />
+              <span className="text-xs text-foreground-2">rollout %</span>
+            </div>
+          )}
+        </div>
+
         {platformMode === "both" ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
             <label className="block space-y-1">
@@ -498,6 +634,17 @@ export function UploadUpdateForm({ appKey }: { appKey: string }) {
           {results.map((result) => (
             <p key={`${result.platform}-${result.updateId}`} className="text-xs text-success">
               [{platformLabel(result.platform)}] {result.updateId.slice(0, 8)}...
+            </p>
+          ))}
+        </div>
+      )}
+
+      {promotionResults.length > 0 && (
+        <div className="rounded-md border border-accent/30 bg-accent/10 p-3 space-y-1">
+          <p className="text-xs font-medium text-accent">Auto promotion done</p>
+          {promotionResults.map((result) => (
+            <p key={`${result.platform}-${result.updateId}-promote`} className="text-xs text-accent">
+              [{platformLabel(result.platform)}] {result.updateId.slice(0, 8)}... {"->"} {result.toChannel}
             </p>
           ))}
         </div>
